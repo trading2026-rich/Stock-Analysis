@@ -85,12 +85,9 @@
     // 1. Point the webpage to your Supabase keys
     const SUPABASE_URL = "https://oczkxudrukyotgmpvpdv.supabase.co"; 
     const SUPABASE_KEY = "sb_publishable_rKa-z8ZCJ76o2AsUqpGHHg_jAQJ74qN";
-    
-    // Changing the variable name here prevents the browser conflict
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // 2. Map color modes to match your custom logic exactly
-    function getScoreClass(val, maxScale = 10) {
     function getScoreClass(val, maxScale = 10) {
         if (val === "N/A" || !val || val === "None") return "neutral";
         const num = parseFloat(val);
@@ -104,7 +101,7 @@
         return "red";
     }
 
-    // 3. Reach out to Supabase using our updated client name
+    // 3. Reach out to Supabase, get the data rows, and display them beautifully
     async function fetchQuantData() {
         let { data: stock_analysis, error } = await supabaseClient
             .from('stock_analysis')
