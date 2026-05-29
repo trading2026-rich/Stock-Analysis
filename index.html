@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quant Engine Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #111827;
+            --bg-row-hover: #1f2937;
+            --border: #374151;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            
+            --green-fill: #14532d;
+            --green-text: #4ade80;
+            --yellow-fill: #713f12;
+            --yellow-text: #fde047;
+            --red-fill: #7f1d1d;
+            --red-text: #fca5a5;
+            --neutral-fill: #374151;
+            --neutral-text: #d1d5db;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 2rem; display: flex; justify-content: center; }
+        .dashboard-container { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 1.5rem; }
+        
+        /* Header styling */
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+        .header h1 { font-size: 1.3rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+        .status-badge { font-size: 0.8rem; color: var(--text-muted); background: var(--bg-card); padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid var(--border); }
+        
+        /* Interactive main data table layout */
+        .matrix-table { width: 100%; background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; border-collapse: collapse; overflow: hidden; }
+        .matrix-table th { background-color: #131c2e; padding: 0.85rem 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+        .matrix-table td { padding: 0.95rem 1rem; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
+        .matrix-table tbody tr { transition: background-color 0.15s; }
+        .matrix-table tbody tr:hover { background-color: var(--bg-row-hover); }
+        
+        .ticker-cell { font-weight: 700; color: #60a5fa; }
+        .company-name { color: var(--text-muted); font-size: 0.75rem; margin-top: 0.1rem; }
+        
+        /* Conditional Pill Badges matching Excel Rules */
+        .badge { display: inline-flex; align-items: center; justify-content: center; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.8rem; min-width: 50px; }
+        .badge.green { background-color: var(--green-fill); color: var(--green-text); }
+        .badge.yellow { background-color: var(--yellow-fill); color: var(--yellow-text); }
+        .badge.red { background-color: var(--red-fill); color: var(--red-text); }
+        .badge.neutral { background-color: var(--neutral-fill); color: var(--neutral-text); }
+        
+        .loading { text-align: center; padding: 4rem; color: var(--text-muted); font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <div class="header">
+        <h1><i data-lucide="cpu" style="color:#60a5fa; width:20px; height:20px;"></i> QUANT ENGINE CORE</h1>
+        <div id="status-badge" class="status-badge">Connecting...</div>
+    </div>
+
+    <table class="matrix-table">
+        <thead>
+            <tr>
+                <th>Ticker Target</th>
+                <th>Final Score</th>
+                <th>Quality (1-5)</th>
+                <th>Invest Timing</th>
+                <th>Growth (1-5)</th>
+                <th>Market Price</th>
+            </tr>
+        </thead>
+        <tbody id="table-body">
+            <tr>
+                <td colspan="6" class="loading">Streaming metrics from cloud data box...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // 1. Point the webpage to your Supabase keys
+    const SUPABASE_URL = "https://oczkxudrukyotgmpvpdv.supabase.co"; 
+    const SUPABASE_KEY = "sb_publishable_rKa-z8ZCJ76o2AsUqpGHHg_jAQJ74qN";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // 2. Map color modes to match your custom logic exactly
+    function getScoreClass(val, maxScale = 10) {
+        if (val === "N/A" || !val || val === "None") return "neutral";
+        const num = parseFloat(val);
+        if (maxScale === 5) {
+            if (num >= 4.0) return "green";
+            if (num <= 2.0) return "red";
+            return "neutral";
+        }
+        if (num >= 7.5) return "green";
+        if (num >= 5.0) return "yellow";
+        return "red";
+    }
+
+    // 3. Reach out to Supabase, get the data rows, and display them beautifully
+    async function fetchQuantData() {
+        let { data: stock_analysis, error } = await supabase
+            .from('stock_analysis')
+            .select('*')
+            .order('final_score', { ascending: false });
+
+        if (error) {
+            console.error(error);
+            document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="loading" style="color:var(--red-text);">Connection Error. Ensure keys are set.</td></tr>`;
+            return;
+        }
+
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = ""; 
+        
+        stock_analysis.forEach(stock => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><div class="ticker-cell">${stock.ticker}</div><div class="company-name">${stock.stock_name}</div></td>
+                <td style="font-weight:700; font-size:1rem; color: var(--${getScoreClass(stock.final_score, 10)}-text);">${stock.final_score}</td>
+                <td><span class="badge ${getScoreClass(stock.quality_score, 5)}">${stock.quality_score}</span></td>
+                <td><span class="badge ${getScoreClass(stock.invest_score, 10)}">${stock.invest_score}</span></td>
+                <td><span class="badge ${getScoreClass(stock.growth_score, 5)}">${stock.growth_score}</span></td>
+                <td>$${stock.stock_price} <span style="font-size:0.72rem; color:var(--text-muted); display:block; margin-top:2px;">52W High: $${stock.high_52w}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+        
+        document.getElementById('status-badge').innerHTML = `● Live Sync Active (${stock_analysis.length} Monitoring)`;
+        lucide.createIcons();
+    }
+
+    fetchQuantData();
+</script>
+</body>
+</html>
