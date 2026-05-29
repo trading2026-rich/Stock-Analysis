@@ -85,7 +85,7 @@
     // 1. Point the webpage to your Supabase keys
     const SUPABASE_URL = "https://oczkxudrukyotgmpvpdv.supabase.co"; 
     const SUPABASE_KEY = "sb_publishable_rKa-z8ZCJ76o2AsUqpGHHg_jAQJ74qN";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = supabaseJS.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // 2. Map color modes to match your custom logic exactly
     function getScoreClass(val, maxScale = 10) {
