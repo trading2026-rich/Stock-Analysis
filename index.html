@@ -162,4 +162,94 @@
 <div class="terminal-frame">
     <div class="terminal-header">
         <div class="title-area">
-            <h1><i data-lucide="terminal" style="color:var(--bullish-text); width:16px; height:16px; stroke-width:2
+            <h1><i data-lucide="terminal" style="color:var(--bullish-text); width:16px; height:16px; stroke-width:2.5px;"></i> Quant.Engine // Matrix_v1.0</h1>
+            <p>Automated Index Component Quantitative Assessment Models</p>
+        </div>
+        <div class="status-container">
+            <div id="status-badge" class="status-badge">Initializing Pipeline...</div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="matrix-table">
+            <thead>
+                <tr>
+                    <th>Asset Target</th>
+                    <th>Final Composite</th>
+                    <th>Historic Quality</th>
+                    <th>Execution Timing</th>
+                    <th>Milestone Growth</th>
+                    <th>Spot Execution Price</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <tr>
+                    <td colspan="6" class="loading">CONNECTING TO CLOUD DATA NODE...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://oczkxudrukyotgmpvpdv.supabase.co"; 
+    const SUPABASE_KEY = "sb_publishable_rKa-z8ZCJ76o2AsUqpGHHg_jAQJ74qN";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    function getScoreClass(val, maxScale = 10) {
+        if (val === "N/A" || !val || val === "None") return "neutral";
+        const num = parseFloat(val);
+        if (maxScale === 5) {
+            if (num >= 4.0) return "green";
+            if (num <= 2.0) return "red";
+            return "neutral";
+        }
+        if (num >= 7.5) return "green";
+        if (num >= 5.0) return "yellow";
+        return "red";
+    }
+
+    async function fetchQuantData() {
+        let { data: stock_analysis, error } = await supabaseClient
+            .from('stock_analysis')
+            .select('*')
+            .order('final_score', { ascending: false });
+
+        if (error) {
+            console.error(error);
+            document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="loading" style="color:var(--bearish-text);">PIPELINE RUNTIME ERROR: DATA RETRIEVAL FAILED</td></tr>`;
+            return;
+        }
+
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = ""; 
+        
+        stock_analysis.forEach(stock => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <div class="ticker-identity">
+                        <div class="ticker-cell">${stock.ticker}</div>
+                        <div class="company-name">${stock.stock_name}</div>
+                    </div>
+                </td>
+                <td><span class="badge ${getScoreClass(stock.final_score, 10)}">${parseFloat(stock.final_score).toFixed(1)}</span></td>
+                <td><span class="badge ${getScoreClass(stock.quality_score, 5)}">${parseFloat(stock.quality_score).toFixed(1)}</span></td>
+                <td><span class="badge ${getScoreClass(stock.invest_score, 10)}">${parseFloat(stock.invest_score).toFixed(1)}</span></td>
+                <td><span class="badge ${getScoreClass(stock.growth_score, 5)}">${stock.growth_score !== 'N/A' ? parseFloat(stock.growth_score).toFixed(1) : 'N/A'}</span></td>
+                <td>
+                    <div class="price-text">$${parseFloat(stock.stock_price).toFixed(2)}</div>
+                    <span class="high52-sub">52W High: $${stock.high_52w}</span>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        
+        document.getElementById('status-badge').innerHTML = `● TERMINAL LIVE // ${stock_analysis.length} TARGET DETECTED`;
+        lucide.createIcons();
+    }
+
+    fetchQuantData();
+</script>
+</body>
+</html>
