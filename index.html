@@ -3,175 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quant Engine // Terminal</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <title>Quant Engine - Matrix Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-
-        :root {
-            --bg-terminal: #070a12;
-            --bg-surface: #0c1220;
-            --bg-surface-hover: #141d33;
-            --border-subtle: rgba(255, 255, 255, 0.05);
-            --border-glow: #1e293b;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted: #475569;
-            --bullish-glow: rgba(34, 197, 94, 0.1);
-            --bullish-text: #4ade80;
-            --neutral-glow: rgba(234, 179, 8, 0.08);
-            --neutral-text: #fde047;
-            --bearish-glow: rgba(239, 68, 68, 0.1);
-            --bearish-text: #f87171;
-            --stagnant-glow: rgba(148, 163, 184, 0.08);
-            --stagnant-text: #94a3b8;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            background-color: var(--bg-terminal); 
-            color: var(--text-primary); 
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            padding: 3rem 2rem; 
-            display: flex; 
-            justify-content: center; 
-            letter-spacing: -0.01em;
-        }
-        .terminal-frame { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 2rem; }
-        .terminal-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid var(--border-glow); padding-bottom: 1.25rem; }
-        .title-area h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.05em; color: var(--text-primary); display: flex; align-items: center; gap: 0.6rem; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; }
-        .title-area p { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem; }
-        .status-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--bullish-text); background: var(--bullish-glow); padding: 0.35rem 0.75rem; border-radius: 4px; border: 1px solid rgba(74, 222, 128, 0.2); font-weight: 700; text-transform: uppercase; }
-        .table-container { background-color: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 6px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        .matrix-table { width: 100%; border-collapse: collapse; text-align: left; }
-        .matrix-table th { background-color: rgba(0, 0, 0, 0.2); padding: 1rem 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border-glow); letter-spacing: 0.03em; }
-        .matrix-table td { padding: 1rem 1.25rem; font-size: 0.85rem; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
-        .matrix-table tbody tr:hover { background-color: var(--bg-surface-hover); }
-        .ticker-identity { display: flex; flex-direction: column; gap: 0.15rem; }
-        .ticker-cell { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.95rem; color: var(--text-primary); }
-        .company-name { color: var(--text-secondary); font-size: 0.75rem; font-weight: 400; }
-        .badge { display: inline-flex; align-items: center; justify-content: center; padding: 0.35rem 0.6rem; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.8rem; min-width: 48px; }
-        .badge.green { background-color: var(--bullish-glow); color: var(--bullish-text); border: 1px solid rgba(74, 222, 128, 0.15); }
-        .badge.yellow { background-color: var(--neutral-glow); color: var(--neutral-text); border: 1px solid rgba(253, 224, 71, 0.15); }
-        .badge.red { background-color: var(--bearish-glow); color: var(--bearish-text); border: 1px solid rgba(248, 113, 113, 0.15); }
-        .badge.neutral { background-color: var(--stagnant-glow); color: var(--stagnant-text); border: 1px solid rgba(148, 163, 184, 0.15); }
-        .price-text { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text-primary); }
-        .high52-sub { display: block; font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.15rem; }
-        .loading { text-align: center; padding: 5rem; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; letter-spacing: 0.05em; }
+        body { font-family: 'Inter', sans-serif; background-color: #F4F2EE; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .sidebar-item:hover { background-color: #E9E7E0; }
+        .active-sidebar { background-color: #E9E7E0; font-weight: 600; }
+        
+        /* Premium minimal badge design */
+        .badge-pro { display: inline-flex; align-items: center; justify-content: center; padding: 0.25rem 0.5rem; border-radius: 6px; font-weight: 600; font-size: 0.75rem; }
+        .badge-pro.green { background-color: #E6F4EA; color: #137333; }
+        .badge-pro.yellow { background-color: #FEF7E0; color: #B06000; }
+        .badge-pro.red { background-color: #FCE8E6; color: #C5221F; }
+        .badge-pro.neutral { background-color: #F1F3F4; color: #5F6368; }
     </style>
 </head>
-<body>
+<body class="flex min-h-screen text-slate-800">
 
-<div class="terminal-frame">
-    <div class="terminal-header">
-        <div class="title-area">
-            <h1><i data-lucide="terminal" style="color:var(--bullish-text); width:16px; height:16px; stroke-width:2.5px;"></i> Quant.Engine // Matrix_v1.0</h1>
-            <p>Automated Index Component Quantitative Assessment Models</p>
+    <div class="w-64 min-h-screen border-r border-gray-200 p-6 bg-[#F8F7F3] sticky top-0 flex flex-col justify-between">
+        <div>
+            <div class="flex items-center space-x-2 mb-10">
+                <div class="w-8 h-8 bg-[#2D4A3E] text-white flex items-center justify-center rounded-lg text-xs font-bold mono">QE</div>
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mono">v1.0</span>
+            </div>
+            
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Core Pipeline</p>
+            <h2 class="text-xl font-semibold mb-8 text-slate-800">Workspace</h2>
+
+            <nav class="space-y-1 text-sm text-gray-600">
+                <a href="index.html" class="flex items-center p-3 rounded-lg active-sidebar transition-all text-[#2D4A3E]">
+                    <span>• Quant Matrix</span>
+                </a>
+                <a href="#" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
+                    <span>• System Logs</span>
+                </a>
+                <a href="#" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
+                    <span>• Backtests</span>
+                </a>
+                <a href="#" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
+                    <span>• Settings</span>
+                </a>
+            </nav>
         </div>
-        <div class="status-container">
-            <div id="status-badge" class="status-badge">Connecting Node...</div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mt-8">
+            <div class="h-24 bg-[#E5E1DA] rounded-xl mb-3 overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1666467831470-8f26f983391f?w=500&auto=format&fit=crop&q=60" class="w-full h-full object-cover opacity-60" alt="zen">
+            </div>
+            <p class="text-xs font-bold text-slate-800">Quant Execution Mode</p>
+            <p class="text-[10px] text-slate-500 mt-1 leading-relaxed">Automated calculations via local background core engine.</p>
         </div>
     </div>
+    
+    <main class="flex-1 overflow-y-auto">
+        <header class="max-w-5xl mx-auto flex justify-between items-start mb-12 pt-16 px-6">
+            <div>
+                <p class="text-xl font-bold tracking-widest text-[#2D4A3E] uppercase mb-1">Matrix Monitor</p>
+                <h1 class="text-l font-medium text-slate-800">Quantitative Screening Terminal</h1>
+                <p class="text-slate-500 mt-2 text-sm">Automated scoring parameters. Trade the plan. Remove human bias.</p>
+            </div>
+            <div class="flex gap-1 bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="px-4 py-2 text-center">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Engine Status</p>
+                    <p id="status-badge" class="text-sm font-semibold text-amber-600">Connecting...</p>
+                </div>
+                <div class="w-[1px] bg-slate-100 my-2"></div>
+                <div class="px-4 py-2 text-center">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Data Stream</p>
+                    <p class="text-sm font-semibold text-green-700">Supabase Live</p>
+                </div>
+            </div>
+        </header>
 
-    <div class="table-container">
-        <table class="matrix-table">
-            <thead>
-                <tr>
-                    <th>Asset Target</th>
-                    <th>Final Composite</th>
-                    <th>Historic Quality</th>
-                    <th>Execution Timing</th>
-                    <th>Milestone Growth</th>
-                    <th>Spot Execution Price</th>
-                </tr>
-            </thead>
-            <tbody id="table-body">
-                <tr>
-                    <td colspan="6" class="loading">CONNECTING TO CLOUD DATA NODE...</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
+        <section class="max-w-5xl mx-auto px-6">
+            <div class="relative w-full h-72 bg-[#E5E1DA] rounded-[2.5rem] overflow-hidden flex items-center p-16 mb-10 border border-white shadow-sm">
+                <div class="z-10 max-w-sm">
+                    <p class="text-[10px] font-bold text-[#2D4A3E] uppercase tracking-widest mb-4">System Mandate</p>
+                    <h2 class="text-2xl font-medium text-slate-800 mb-4 leading-tight">Trust the Math.<br>Execute the Matrix.</h2>
+                    <p class="text-slate-600 mb-8 text-sm leading-relaxed">High score rankings highlight historical asset premiums. Filter out the noise and trade the edge.</p>
+                    <button onclick="window.location.reload();" class="bg-[#2D4A3E] text-white px-8 py-3 rounded-xl text-sm font-medium hover:bg-[#1f332b] transition-all">
+                        Refresh Node
+                    </button>
+                </div>
+                <img src="https://images.unsplash.com/photo-1744782211816-c5224434614f?w=500&auto=format&fit=crop&q=60" class="absolute right-0 top-0 w-1/2 h-full object-cover mix-blend-multiply opacity-40" alt="bonsai">
+            </div>
 
-<script>
-    const SUPABASE_URL = "https://oczkxudrukyotgmpvpdv.supabase.co"; 
-    const SUPABASE_KEY = "sb_publishable_rKa-z8ZCJ76o2AsUqpGHHg_jAQJ74qN";
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    function formatNum(val, decimals = 1) {
-        if (val === undefined || val === null || val === "N/A" || val === "None" || val === "") return "N/A";
-        const parsed = parseFloat(val);
-        return isNaN(parsed) ? val : parsed.toFixed(decimals);
-    }
-
-    function getScoreClass(val, maxScale = 10) {
-        if (val === "N/A" || !val || val === "None" || val === "") return "neutral";
-        const num = parseFloat(val);
-        if (isNaN(num)) return "neutral";
-        if (maxScale === 5) {
-            if (num >= 4.0) return "green";
-            if (num <= 2.0) return "red";
-            return "neutral";
-        }
-        if (num >= 7.5) return "green";
-        if (num >= 5.0) return "yellow";
-        return "red";
-    }
-
-    async function fetchQuantData() {
-        console.log("Starting data fetch sequence...");
-        let { data: stock_analysis, error } = await supabaseClient
-            .from('stock_analysis')
-            .select('*');
-
-        if (error) {
-            console.error("Database connection error object:", error);
-            document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="loading" style="color:var(--bearish-text);">DATABASE ERROR: ${error.message} (Code: ${error.code})</td></tr>`;
-            return;
-        }
-
-        if (!stock_analysis || stock_analysis.length === 0) {
-            console.log("Connected successfully, but table 'stock_analysis' returned 0 records.");
-            document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="loading">CONNECTED // NO COMPONENT DATA DETECTED IN TABLE</td></tr>`;
-            document.getElementById('status-badge').innerHTML = `● MATRIX EMPTY`;
-            return;
-        }
-
-        console.log(`Successfully fetched ${stock_analysis.length} rows.`);
-        stock_analysis.sort((a, b) => parseFloat(b.final_score || 0) - parseFloat(a.final_score || 0));
-
-        const tbody = document.getElementById('table-body');
-        tbody.innerHTML = ""; 
-        
-        stock_analysis.forEach(stock => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>
-                    <div class="ticker-identity">
-                        <div class="ticker-cell">${stock.ticker || '---'}</div>
-                        <div class="company-name">${stock.stock_name || 'Unknown Asset'}</div>
+            <div class="mb-12">
+                <h3 class="text-sm font-bold text-slate-800 mb-2">Metrics Snapshot</h3>
+                <p class="text-xs text-slate-500 mb-6 font-medium">Real-time counts processed through the active mathematical filter.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-8 rounded-3xl border border-slate-200 flex flex-col justify-between h-44 shadow-sm">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Monitored Assets</p>
+                        <div>
+                            <p class="text-5xl font-light text-slate-800" id="total-assets">--</p>
+                            <p class="text-[10px] text-slate-400 mt-2 font-medium">Active database rows</p>
+                        </div>
                     </div>
-                </td>
-                <td><span class="badge ${getScoreClass(stock.final_score, 10)}">${formatNum(stock.final_score, 1)}</span></td>
-                <td><span class="badge ${getScoreClass(stock.quality_score, 5)}">${formatNum(stock.quality_score, 1)}</span></td>
-                <td><span class="badge ${getScoreClass(stock.invest_score, 10)}">${formatNum(stock.invest_score, 1)}</span></td>
-                <td><span class="badge ${getScoreClass(stock.growth_score, 5)}">${formatNum(stock.growth_score, 1)}</span></td>
-                <td>
-                    <div class="price-text">$${formatNum(stock.stock_price, 2)}</div>
-                    <span class="high52-sub">52W High: $${formatNum(stock.high_52w, 2)}</span>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-        
-        document.getElementById('status-badge').innerHTML = `● TERMINAL LIVE // ${stock_analysis.length} TARGETS DETECTED`;
-        if (window.lucide) lucide.createIcons();
-    }
+                    <div class="bg-white p-8 rounded-3xl border border-slate-200 flex flex-col justify-between h-44 shadow-sm">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Top Rated Setup</p>
+                        <div>
+                            <p class="text-4xl font-light text-slate-800 tracking-tight mono" id="top-asset">--</p>
+                            <p class="text-[10px] text-slate-400 mt-3 font-medium">Highest composite score</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-8 rounded-3xl border border-slate-200 flex flex-col justify-between h-44 shadow-sm">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pipeline Health</p>
+                        <div>
+                            <p class="text-5xl font-light text-green-700">100%</p>
+                            <p class="text-[10px] text-slate-400 mt-2 font-medium">Sync sync established</p>
+                        </div>
+                    </div>
+                </div> 
+            </div>  
 
-    // Run layout execution loop immediately on load
-    window.onload = fetchQuantData;
-</script>
+            <div class="mb-16">
+                <h3 class="text-sm font-bold text-slate-800 mb-2">Data Engine Pipeline</h3>
+                <p class="text-xs text-slate-500 mb-6 font-medium">Components sorted automatically by final raw composite rank.</p>
+                
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50/70 border-b border-slate-200 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                                    <th class="py-4 px-6">Asset Target</th>
+                                    <th class="py-4 px-6 text-center">Final Composite</th>
+                                    <th class="py-4 px-6 text-center">Quality Score</th>
+                                    <th class="py-4 px-6 text-center">Timing Score</th>
+                                    <th class="py-4 px-6 text-center">Growth Score</th>
+                                    <th class="py-4 px-6 text-right">Execution Price</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body" class="text-sm divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td colspan="6" class="py-16 text-center font-medium text-slate-400 tracking-wide">
+                                        CONNECTING TO CLOUD NODE STREAM...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://oczkxudrukyotgmpvpdv.supabase.co"; 
+        const SUPABASE_KEY = "sb_publishable_rKa-z8ZCJ76o2AsUqpGHHg_jAQJ74qN";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Safe formatter to prevent runtime crashes on string gaps
+        function formatNum(val, decimals = 1) {
+            if (val === undefined || val === null || val === "N/A" || val === "None" || val === "") return "N/A";
+            const parsed = parseFloat(val);
+            return isNaN(parsed) ? val : parsed.toFixed(decimals);
+        }
+
+        // Assigns classes matching your clean custom colors
+        function getScoreClass(val, maxScale = 10) {
+            if (val === "N/A" || !val || val === "None" || val === "") return "neutral";
+            const num = parseFloat(val);
+            if (isNaN(num)) return "neutral";
+            if (maxScale === 5) {
+                if (num >= 4.0) return "green";
+                if (num <= 2.0) return "red";
+                return "neutral";
+            }
+            if (num >= 7.5) return "green";
+            if (num >= 5.0) return "yellow";
+            return "red";
+        }
+
+        async function fetchQuantData() {
+            let { data: stock_analysis, error } = await supabaseClient
+                .from('stock_analysis')
+                .select('*');
+
+            if (error) {
+                console.error(error);
+                document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="py-16 text-center text-red-600 font-semibold">DATABASE ERROR: ${error.message}</td></tr>`;
+                document.getElementById('status-badge').innerText = "Pipeline Broken";
+                return;
+            }
+
+            if (!stock_analysis || stock_analysis.length === 0) {
+                document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="py-16 text-center text-slate-400">NO COMPONENT DATA RECORDED IN TABLE</td></tr>`;
+                document.getElementById('status-badge').innerText = "Empty Grid";
+                return;
+            }
+
+            // High score ranking sort logic
+            stock_analysis.sort((a, b) => parseFloat(b.final_score || 0) - parseFloat(a.final_score || 0));
+
+            // Set snapshot statistics blocks
+            document.getElementById('total-assets').innerText = stock_analysis.length;
+            document.getElementById('top-asset').innerText = stock_analysis[0].ticker || 'N/A';
+
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = ""; 
+            
+            stock_analysis.forEach(stock => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-4 px-6">
+                        <div class="font-semibold text-slate-900 mono text-base">${stock.ticker || '---'}</div>
+                        <div class="text-xs text-slate-400 mt-0.5">${stock.stock_name || 'Unknown Asset'}</div>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <span class="badge-pro ${getScoreClass(stock.final_score, 10)} w-12 py-1 mono text-sm">${formatNum(stock.final_score, 1)}</span>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <span class="badge-pro ${getScoreClass(stock.quality_score, 5)} min-w-[40px]">${formatNum(stock.quality_score, 1)}</span>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <span class="badge-pro ${getScoreClass(stock.invest_score, 10)} min-w-[40px]">${formatNum(stock.invest_score, 1)}</span>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <span class="badge-pro ${getScoreClass(stock.growth_score, 5)} min-w-[40px]">${formatNum(stock.growth_score, 1)}</span>
+                    </td>
+                    <td class="py-4 px-6 text-right">
+                        <div class="font-semibold text-slate-900 mono">$${formatNum(stock.stock_price, 2)}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">52W High: $${formatNum(stock.high_52w, 2)}</div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            document.getElementById('status-badge').innerText = "Live Sync";
+            document.getElementById('status-badge').className = "text-sm font-semibold text-green-700";
+        }
+
+        window.onload = fetchQuantData;
+    </script>
 </body>
 </html>
