@@ -30,22 +30,22 @@
             </div>
             
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Core Pipeline</p>
-<h2 class="text-xl font-semibold mb-8 text-slate-800">Workspace</h2>
+            <h2 class="text-xl font-semibold mb-8 text-slate-800">Workspace</h2>
 
-<nav class="space-y-1 text-sm text-gray-600">
-    <a href="index.html" class="flex items-center p-3 rounded-lg active-sidebar transition-all text-[#2D4A3E]">
-        <span>• Quant Matrix</span>
-    </a>
-    <a href="financials.html" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
-        <span>• Financials</span>
-    </a>
-    <a href="#" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
-        <span>• Backtests</span>
-    </a>
-    <a href="#" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
-        <span>• Settings</span>
-    </a>
-</nav>
+            <nav class="space-y-1 text-sm text-gray-600">
+                <a href="index.html" class="flex items-center p-3 rounded-lg active-sidebar transition-all text-[#2D4A3E]">
+                    <span>• Quant Matrix</span>
+                </a>
+                <a href="financials.html" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
+                    <span>• Financials</span>
+                </a>
+                <a href="#" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
+                    <span>• Backtests</span>
+                </a>
+                <a href="#" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
+                    <span>• Settings</span>
+                </a>
+            </nav>
         </div>
 
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mt-8">
@@ -116,7 +116,7 @@
                         </div>
                     </div>
                 </div> 
-            </div>  
+            </div>   
 
             <div class="mb-16">
                 <h3 class="text-sm font-bold text-slate-800 mb-2">Data Engine Pipeline</h3>
@@ -155,14 +155,12 @@
         const SUPABASE_KEY = "sb_publishable_rKa-z8ZCJ76o2AsUqpGHHg_jAQJ74qN";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Safe formatter to prevent runtime crashes on string gaps
         function formatNum(val, decimals = 1) {
             if (val === undefined || val === null || val === "N/A" || val === "None" || val === "") return "N/A";
             const parsed = parseFloat(val);
             return isNaN(parsed) ? val : parsed.toFixed(decimals);
         }
 
-        // Assigns classes matching your clean custom colors
         function getScoreClass(val, maxScale = 10) {
             if (val === "N/A" || !val || val === "None" || val === "") return "neutral";
             const num = parseFloat(val);
@@ -195,10 +193,8 @@
                 return;
             }
 
-            // High score ranking sort logic
             stock_analysis.sort((a, b) => parseFloat(b.final_score || 0) - parseFloat(a.final_score || 0));
 
-            // Set snapshot statistics blocks
             document.getElementById('total-assets').innerText = stock_analysis.length;
             document.getElementById('top-asset').innerText = stock_analysis[0].ticker || 'N/A';
 
