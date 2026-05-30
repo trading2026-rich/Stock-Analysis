@@ -60,4 +60,161 @@
     <main class="flex-1 overflow-y-auto">
         <header class="max-w-6xl mx-auto flex justify-between items-start mb-12 pt-16 px-6">
             <div>
-                <p class="text-xl font-bold tracking-widest text-
+                <p class="text-xl font-bold tracking-widest text-[#2D4A3E] uppercase mb-1">Financial Analysis</p>
+                <h1 class="text-l font-medium text-slate-800">Fundamental Metrics Matrix</h1>
+                <p class="text-slate-500 mt-2 text-sm">Deep capital structure, liquidity data, and earnings multiples.</p>
+            </div>
+            <div class="flex gap-4 items-center">
+                <div class="bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mono">Filter:</span>
+                    <input type="text" id="tickerSearch" onkeyup="filterTable()" placeholder="TICKER..." class="text-xs font-bold text-slate-700 focus:outline-none w-20 uppercase bg-transparent mono">
+                </div>
+
+                <div class="flex gap-1 bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="px-4 py-2 text-center">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Engine Status</p>
+                        <p id="status-badge" class="text-sm font-semibold text-green-700">Live Sync</p>
+                    </div>
+                    <div class="w-[1px] bg-slate-100 my-2"></div>
+                    <div class="px-4 py-2 text-center">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Data Stream</p>
+                        <p class="text-sm font-semibold text-green-700">Supabase</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="max-w-6xl mx-auto px-6">
+            <div class="relative w-full h-72 bg-[#E5E1DA] rounded-[2.5rem] overflow-hidden flex items-center p-16 mb-10 border border-white shadow-sm">
+                <div class="z-10 max-w-sm">
+                    <p class="text-[10px] font-bold text-[#2D4A3E] uppercase tracking-widest mb-4">Balance Sheet Data</p>
+                    <h2 class="text-2xl font-medium text-slate-800 mb-4 leading-tight">Structural Integrity.<br>Valuation Alignment.</h2>
+                    <p class="text-slate-600 mb-8 text-sm leading-relaxed">Exposing deeper capital positions, profit margins, and valuation ratios straight from your spreadsheet updates.</p>
+                    <button onclick="window.location.reload();" class="bg-[#2D4A3E] text-white px-8 py-3 rounded-xl text-sm font-medium hover:bg-[#1f332b] transition-all">
+                        Refresh Node
+                    </button>
+                </div>
+                <img src="https://images.unsplash.com/photo-1744782211816-c5224434614f?w=500&auto=format&fit=crop&q=60" class="absolute right-0 top-0 w-1/2 h-full object-cover mix-blend-multiply opacity-40" alt="bonsai">
+            </div>
+
+            <div class="mb-16">
+                <h3 class="text-sm font-bold text-slate-800 mb-2">Fundamental Analytics Pipeline</h3>
+                <p class="text-xs text-slate-500 mb-6 font-medium">Full tracking parameters sorted alphabetically by asset identifier.</p>
+                
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse" id="financialsTable">
+                            <thead>
+                                <tr class="bg-slate-50/70 border-b border-slate-200 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                                    <th class="py-4 px-5 sticky left-0 bg-slate-50/70">Asset Target</th>
+                                    <th class="py-4 px-4 text-right">Market Cap</th>
+                                    <th class="py-4 px-4 text-right">Turnover</th>
+                                    <th class="py-4 px-4 text-right">Net Profit</th>
+                                    <th class="py-4 px-4 text-right">FCF</th>
+                                    <th class="py-4 px-4 text-center">P/E</th>
+                                    <th class="py-4 px-4 text-center">Fwd P/E</th>
+                                    <th class="py-4 px-4 text-center">PEG</th>
+                                    <th class="py-4 px-4 text-center">ROE (%)</th>
+                                    <th class="py-4 px-4 text-center">Div Yield</th>
+                                    <th class="py-4 px-4 text-center">D/E</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body" class="text-sm divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td colspan="11" class="py-16 text-center font-medium text-slate-400 tracking-wide">
+                                        SYNCHRONIZING STRUCTURAL BALANCE SHEET ENTRIES...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://oczkxudrukyotgmpvpdv.supabase.co"; 
+        const SUPABASE_KEY = "sb_publishable_rKa-z8ZCJ76o2AsUqpGHHg_jAQJ74qN";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        function formatVal(val, suffix = "") {
+            if (val === undefined || val === null || val === "N/A" || val === "None" || val === "") return "—";
+            return `${val}${suffix}`;
+        }
+
+        function formatPct(val) {
+            if (val === undefined || val === null || val === "N/A" || val === "None" || val === "" || val === 0) return "—";
+            const num = parseFloat(val);
+            if (isNaN(num)) return val;
+            return num <= 1.0 && num > 0 ? `${(num * 100).toFixed(1)}%` : `${num.toFixed(1)}%`;
+        }
+
+        async function fetchFinancialsData() {
+            let { data: stock_analysis, error } = await supabaseClient
+                .from('stock_analysis')
+                .select('*');
+
+            if (error) {
+                console.error(error);
+                document.getElementById('table-body').innerHTML = `<tr><td colspan="11" class="py-16 text-center text-red-600 font-semibold">DATABASE LINK DISRUPTED: ${error.message}</td></tr>`;
+                return;
+            }
+
+            if (!stock_analysis || stock_analysis.length === 0) {
+                document.getElementById('table-body').innerHTML = `<tr><td colspan="11" class="py-16 text-center text-slate-400">NO SEC REGISTERED METRICS LOADED</td></tr>`;
+                return;
+            }
+
+            stock_analysis.sort((a, b) => (a.ticker || '').localeCompare(b.ticker || ''));
+
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = ""; 
+            
+            stock_analysis.forEach(stock => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-4 px-5 sticky left-0 bg-white font-semibold text-slate-900 mono text-base border-r border-slate-100">
+                        ${stock.ticker || '---'}
+                        <div class="text-[10px] text-slate-400 font-normal max-w-[130px] truncate mt-0.5">${stock.stock_name || 'Unknown Asset'}</div>
+                    </td>
+                    <td class="py-4 px-4 text-right font-medium text-slate-900 mono">${formatVal(stock.market_cap)}</td>
+                    <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.turnover)}</td>
+                    <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.net_profit)}</td>
+                    <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.free_cash_flow)}</td>
+                    <td class="py-4 px-4 text-center text-slate-900 font-medium mono">${formatVal(stock.pe_ratio)}</td>
+                    <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.forward_pe)}</td>
+                    <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.peg_ratio)}</td>
+                    <td class="py-4 px-4 text-center font-medium text-emerald-700 mono bg-emerald-50/20">${formatPct(stock.roe_percent)}</td>
+                    <td class="py-4 px-4 text-center text-slate-600 mono">${formatPct(stock.div_yield)}</td>
+                    <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.debt_to_equity)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterTable() {
+            const input = document.getElementById("tickerSearch");
+            const filter = input.value.toUpperCase();
+            const table = document.getElementById("financialsTable");
+            const tr = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < tr.length; i++) {
+                const td = tr[i].getElementsByTagName("td")[0];
+                if (td) {
+                    const txtValue = td.textContent || td.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }       
+            }
+        }
+
+        window.onload = fetchFinancialsData;
+    </script>
+</body>
+</html>
