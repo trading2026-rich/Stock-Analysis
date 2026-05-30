@@ -173,26 +173,26 @@
             tbody.innerHTML = ""; 
             
             stock_analysis.forEach(stock => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50/80 transition-colors";
-                tr.innerHTML = `
-                    <td class="py-4 px-5 sticky left-0 bg-white font-semibold text-slate-900 mono text-base border-r border-slate-100">
-                        ${stock.ticker || '---'}
-                        <div class="text-[10px] text-slate-400 font-normal max-w-[130px] truncate mt-0.5">${stock.stock_name || 'Unknown Asset'}</div>
-                    </td>
-                    <td class="py-4 px-4 text-right font-medium text-slate-900 mono">${formatVal(stock.market_cap)}</td>
-                    <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.turnover)}</td>
-                    <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.net_profit)}</td>
-                    <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.free_cash_flow)}</td>
-                    <td class="py-4 px-4 text-center text-slate-900 font-medium mono">${formatVal(stock.pe_ratio)}</td>
-                    <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.forward_pe)}</td>
-                    <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.peg_ratio)}</td>
-                    <td class="py-4 px-4 text-center font-medium text-emerald-700 mono bg-emerald-50/20">${formatPct(stock.roe_percent)}</td>
-                    <td class="py-4 px-4 text-center text-slate-600 mono">${formatPct(stock.div_yield)}</td>
-                    <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.debt_to_equity)}</td>
-                `;
-                tbody.appendChild(tr);
-            });
+    const tr = document.createElement('tr');
+    tr.className = "hover:bg-slate-50/80 transition-colors";
+    tr.innerHTML = `
+        <td class="py-4 px-5 sticky left-0 bg-white font-semibold text-slate-900 mono text-base border-r border-slate-100">
+            ${stock.ticker || '---'}
+            <div class="text-[10px] text-slate-400 font-normal max-w-[130px] truncate mt-0.5">${stock.stock_name || 'Unknown Asset'}</div>
+        </td>
+        <td class="py-4 px-4 text-right font-medium text-slate-900 mono">${formatVal(stock.market_cap || null)}</td>
+        <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.turnover || null)}</td>
+        <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.net_profit || null)}</td>
+        <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.free_cash_flow || null)}</td>
+        <td class="py-4 px-4 text-center text-slate-900 font-medium mono">${formatVal(stock.pe_ratio || null)}</td>
+        <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.forward_pe || null)}</td>
+        <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.peg_ratio || null)}</td>
+        <td class="py-4 px-4 text-center font-medium text-emerald-700 mono bg-emerald-50/20">${formatPct(stock.roe_percent || null)}</td>
+        <td class="py-4 px-4 text-center text-slate-600 mono">${formatPct(stock.div_yield || null)}</td>
+        <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.debt_to_equity || null)}</td>
+    `;
+    tbody.appendChild(tr);
+});
         }
 
         function filterTable() {
