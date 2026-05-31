@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quant Engine - Financials Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700&family=JetBrains+Mono:wght=400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #F4F2EE; }
         .mono { font-family: 'JetBrains Mono', monospace; }
@@ -84,37 +84,36 @@
             </div>
         </header>
 
-            <div class="mb-16">
-                <h3 class="text-sm font-bold text-slate-800 mb-2">Fundamental Analytics Pipeline</h3>
-                <p class="text-xs text-slate-500 mb-6 font-medium">Full tracking parameters sorted alphabetically by asset identifier.</p>
-                
-                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse" id="financialsTable">
-                            <thead>
-                                <tr class="bg-slate-50/70 border-b border-slate-200 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
-                                    <th class="py-4 px-5 sticky left-0 bg-slate-50/70">Asset Target</th>
-                                    <th class="py-4 px-4 text-right">Market Cap</th>
-                                    <th class="py-4 px-4 text-right">Turnover</th>
-                                    <th class="py-4 px-4 text-right">Net Profit</th>
-                                    <th class="py-4 px-4 text-right">FCF</th>
-                                    <th class="py-4 px-4 text-center">P/E</th>
-                                    <th class="py-4 px-4 text-center">Fwd P/E</th>
-                                    <th class="py-4 px-4 text-center">PEG</th>
-                                    <th class="py-4 px-4 text-center">ROE (%)</th>
-                                    <th class="py-4 px-4 text-center">Div Yield</th>
-                                    <th class="py-4 px-4 text-center">D/E</th>
-                                </tr>
-                            </thead>
-                            <tbody id="table-body" class="text-sm divide-y divide-slate-100 text-slate-700">
-                                <tr>
-                                    <td colspan="11" class="py-16 text-center font-medium text-slate-400 tracking-wide">
-                                        SYNCHRONIZING STRUCTURAL BALANCE SHEET ENTRIES...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+        <section class="max-w-6xl mx-auto px-6 mb-16">
+            <h3 class="text-sm font-bold text-slate-800 mb-2">Fundamental Analytics Pipeline</h3>
+            <p class="text-xs text-slate-500 mb-6 font-medium">Full tracking parameters sorted alphabetically by asset identifier.</p>
+            
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse" id="financialsTable">
+                        <thead>
+                            <tr class="bg-slate-50/70 border-b border-slate-200 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                                <th class="py-4 px-5 sticky left-0 bg-slate-50/70">Asset Target</th>
+                                <th class="py-4 px-4 text-right">Market Cap</th>
+                                <th class="py-4 px-4 text-right">Turnover</th>
+                                <th class="py-4 px-4 text-right">Net Profit</th>
+                                <th class="py-4 px-4 text-right">FCF</th>
+                                <th class="py-4 px-4 text-center">P/E</th>
+                                <th class="py-4 px-4 text-center">Fwd P/E</th>
+                                <th class="py-4 px-4 text-center">PEG</th>
+                                <th class="py-4 px-4 text-center">ROE (%)</th>
+                                <th class="py-4 px-4 text-center">Div Yield</th>
+                                <th class="py-4 px-4 text-center">D/E</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="text-sm divide-y divide-slate-100 text-slate-700">
+                            <tr>
+                                <td colspan="11" class="py-16 text-center font-medium text-slate-400 tracking-wide">
+                                    SYNCHRONIZING STRUCTURAL BALANCE SHEET ENTRIES...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>
@@ -160,26 +159,26 @@
             tbody.innerHTML = ""; 
             
             stock_analysis.forEach(stock => {
-    const tr = document.createElement('tr');
-    tr.className = "hover:bg-slate-50/80 transition-colors";
-    tr.innerHTML = `
-        <td class="py-4 px-5 sticky left-0 bg-white font-semibold text-slate-900 mono text-base border-r border-slate-100">
-            ${stock.ticker || '---'}
-            <div class="text-[10px] text-slate-400 font-normal max-w-[130px] truncate mt-0.5">${stock.stock_name || 'Unknown Asset'}</div>
-        </td>
-        <td class="py-4 px-4 text-right font-medium text-slate-900 mono">${formatVal(stock.market_cap || null)}</td>
-        <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.turnover || null)}</td>
-        <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.net_profit || null)}</td>
-        <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.free_cash_flow || null)}</td>
-        <td class="py-4 px-4 text-center text-slate-900 font-medium mono">${formatVal(stock.pe_ratio || null)}</td>
-        <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.forward_pe || null)}</td>
-        <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.peg_ratio || null)}</td>
-        <td class="py-4 px-4 text-center font-medium text-emerald-700 mono bg-emerald-50/20">${formatPct(stock.roe_percent || null)}</td>
-        <td class="py-4 px-4 text-center text-slate-600 mono">${formatPct(stock.div_yield || null)}</td>
-        <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.debt_to_equity || null)}</td>
-    `;
-    tbody.appendChild(tr);
-});
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-4 px-5 sticky left-0 bg-white font-semibold text-slate-900 mono text-base border-r border-slate-100">
+                        ${stock.ticker || '---'}
+                        <div class="text-[10px] text-slate-400 font-normal max-w-[130px] truncate mt-0.5">${stock.stock_name || 'Unknown Asset'}</div>
+                    </td>
+                    <td class="py-4 px-4 text-right font-medium text-slate-900 mono">${formatVal(stock.market_cap || null)}</td>
+                    <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.turnover || null)}</td>
+                    <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.net_profit || null)}</td>
+                    <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.free_cash_flow || null)}</td>
+                    <td class="py-4 px-4 text-center text-slate-900 font-medium mono">${formatVal(stock.pe_ratio || null)}</td>
+                    <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.forward_pe || null)}</td>
+                    <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.peg_ratio || null)}</td>
+                    <td class="py-4 px-4 text-center font-medium text-emerald-700 mono bg-emerald-50/20">${formatPct(stock.roe_percent || null)}</td>
+                    <td class="py-4 px-4 text-center text-slate-600 mono">${formatPct(stock.div_yield || null)}</td>
+                    <td class="py-4 px-4 text-center text-slate-600 mono">${formatVal(stock.debt_to_equity || null)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         function filterTable() {
@@ -197,7 +196,7 @@
                     } else {
                         tr[i].style.display = "none";
                     }
-                }       
+                }        
             }
         }
 
