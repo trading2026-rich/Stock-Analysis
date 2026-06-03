@@ -3,6 +3,7 @@ from openpyxl.styles import PatternFill, Font, Alignment
 from datetime import datetime
 import yfinance as yf
 from supabase import create_client, Client
+import pandas as pd
 
 # === Configuration ===
 tickers = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'META', 'CELH', 'NVDA', 'AMZN', 'PEP', 'HIMS', 'UBER', 'NOV', 'NVO', 'NFLX', 'MRAM', 'HOOD', 'NOW', 'EOSE', 'DELL', 'PLTR', 'IBM', 'LAC', 'ORCL', 'CRWV', 'NOK', 'IREN', 'TSM', 'AMD']
@@ -85,6 +86,24 @@ for ticker in tickers:
     print(f"Analyzing: {ticker}")
     stock = yf.Ticker(ticker)
     info = stock.info
+    
+    # --- DYNAMIC HISTORICAL CAGR CALCULATION MODULE ---
+    rev_3y_cagr = "N/A"
+    try:
+        financials = stock.financials
+        if "Total Revenue" in financials.index:
+            revenue_series = financials.loc["Total Revenue"].dropna()
+            if len(revenue_series) >= 4:
+                # Yahoo columns list recent to oldest. Index 0 = Latest, Index 3 = 3 Years Ago
+                latest_rev = revenue_series.iloc[0]
+                old_rev_3y = revenue_series.iloc[3]
+                
+                if latest_rev > 0 and old_rev_3y > 0:
+                    cagr_val = ((latest_rev / old_rev_3y) ** (1 / 3)) - 1
+                    rev_3y_cagr = f"{round(cagr_val * 100, 2)}%"
+    except Exception as e:
+        print(f"⚠️ Could not calculate CAGR for {ticker}: {e}")
+
     try:
         price = info.get("currentPrice") or info.get("regularMarketPrice") or 0
         f_eps = info.get("forwardEps")
@@ -152,7 +171,7 @@ for ticker in tickers:
             "Profit Margin": p_margin_pct,
             "Operating Margin": o_margin_pct,
             "ROIC Percent": "N/A",
-            "Revenue 3y CAGR": "N/A", 
+            "Revenue 3y CAGR": rev_3y_cagr,  # <-- PUSHES DYNAMIC MATH RESULT LIVE
             "Revenue 5y CAGR": "N/A",
             "Revenue 10y CAGR": "N/A",
             "Net Debt": format_finance_value(info.get("totalDebt", 0) - info.get("totalCash", 0))
@@ -231,9 +250,7 @@ ws.cell(row=1, column=2, value=datetime.now().strftime("Last updated: %d %b %Y %
 wb.save(filename)
 print("✅ Excel Local Workbook Updated.")
 
-# ========================================================
-# === ADDED: CLOUD DATABASE PIPELINE (SUPABASE SYNC) ===
-# ========================================================
+# === Cloud Database Sync ===
 print("📤 Streaming real-time matrix entries to Supabase cloud...")
 
 for entry in data:
