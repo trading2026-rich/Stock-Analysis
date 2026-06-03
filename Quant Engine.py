@@ -205,7 +205,7 @@ for row in range(3, ws.max_row + 1):
             else: ws.cell(row=row, column=f_col).fill = red
 
     if q_col:
-        val = ws.cell(row=row, column=q_col).fill
+        val = ws.cell(row=row, column=q_col).value
         if isinstance(val, (int, float)):
             if val >= 4.0: ws.cell(row=row, column=q_col).fill = green
             elif val <= 2.0: ws.cell(row=row, column=q_col).fill = red
@@ -221,4 +221,4 @@ for row in range(3, ws.max_row + 1):
         val = ws.cell(row=row, column=g_col).value
         if isinstance(val, (int, float)):
             if val >= 4.0: ws.cell(row=row, column=g_col).fill = green
-            elif val <= 2.5: ws.cell(row=row, column=g_
+            elif val <= 2.5: ws.cell(row=row, column=g_col).fill = red
