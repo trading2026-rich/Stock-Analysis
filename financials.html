@@ -12,16 +12,14 @@
         .sidebar-item:hover { background-color: #E9E7E0; }
         .active-sidebar { background-color: #E9E7E0; font-weight: 600; }
         
-        /* Premium minimal badge design */
         .badge-pro { display: inline-flex; align-items: center; justify-content: center; padding: 0.25rem 0.5rem; border-radius: 6px; font-weight: 600; font-size: 0.75rem; }
         .badge-pro.green { background-color: #E6F4EA; color: #137333; }
-        .badge-pro.yellow { background-color: #FEF7E0; color: #B06000; }
         .badge-pro.red { background-color: #FCE8E6; color: #C5221F; }
-        .badge-pro.neutral { background-color: #F1F3F4; color: #5F6368; }
     </style>
 </head>
 <body class="flex min-h-screen text-slate-800">
 
+    <!-- SIDEBAR NAVIGATION -->
     <div class="w-64 min-h-screen border-r border-gray-200 p-6 bg-[#F8F7F3] sticky top-0 flex flex-col justify-between">
         <div>
             <div class="flex items-center space-x-2 mb-10">
@@ -57,6 +55,7 @@
         </div>
     </div>
     
+    <!-- MAIN DISPLAY AREA -->
     <main class="flex-1 overflow-y-auto">
         <header class="max-w-6xl mx-auto flex justify-between items-start mb-12 pt-16 px-6">
             <div>
@@ -84,10 +83,8 @@
             </div>
         </header>
 
+        <!-- VIEW 1: PIPELINE GRID TABLE -->
         <section id="pipeline-view" class="max-w-6xl mx-auto px-6 mb-16">
-            <h3 class="text-sm font-bold text-slate-800 mb-2">Fundamental Analytics Pipeline</h3>
-            <p class="text-xs text-slate-500 mb-6 font-medium">Full tracking parameters sorted alphabetically by asset identifier.</p>
-            
             <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse" id="financialsTable">
@@ -118,67 +115,122 @@
             </div>
         </section>
 
+        <!-- VIEW 2: CATEGORIZED DETAILED PROFILE VIEW (Matches Screen Layout Formats) -->
         <section id="detail-view" class="max-w-6xl mx-auto px-6 mb-16 hidden">
-            <button onclick="showPipelineView()" class="text-xs font-semibold text-[#2D4A3E] hover:underline mb-6 flex items-center gap-1">
-                ← Back to Pipeline Matrix
+            <button onclick="showPipelineView()" class="text-xs font-semibold text-[#2D4A3E] hover:underline mb-6 flex items-center gap-1 focus:outline-none">
+                <!-- Verbatim Reference: alpha.PNG back button setup -->
+                &larr; Back to Pipeline Matrix
             </button>
 
-            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
-                <div class="flex justify-between items-start border-b border-slate-100 pb-6 mb-8">
+            <!-- 1. TOP ANCHOR PROFILE HERO (From alpha.PNG Top Section) -->
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 mb-6">
+                <div class="flex justify-between items-start border-b border-slate-100 pb-6 mb-6">
                     <div>
-                        <span id="detail-ticker" class="text-2xl font-bold mono bg-slate-100 px-3 py-1 rounded-xl text-slate-900">---</span>
-                        <h2 id="detail-name" class="text-xl font-medium text-slate-800 mt-3">Asset Name</h2>
+                        <h2 id="detail-name" class="text-2xl font-semibold text-slate-900 tracking-tight">Company Name</h2>
+                        <p class="text-sm font-medium text-slate-400 mt-1 mono">Symbol: <span id="detail-ticker" class="text-slate-700 font-bold">---</span></p>
                     </div>
-                    <div class="text-right">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Analysis Status</p>
-                        <span class="badge-pro green mt-1">Matrix Verified</span>
+                    <div>
+                        <span class="badge-pro green">Pipeline Verified</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
+                    <div class="space-y-2">
+                        <div class="flex justify-between py-1.5 border-b border-slate-100 text-sm"><span class="text-slate-500">Market Cap</span><span id="pos-market-cap" class="font-semibold text-slate-900 mono">—</span></div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-100 text-sm"><span class="text-slate-500">Website</span><span id="pos-website" class="font-medium text-blue-600 hover:underline mono">—</span></div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-100 text-sm"><span class="text-slate-500">Revenue</span><span id="pos-revenue" class="font-medium text-slate-800 mono">—</span></div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-100 text-sm"><span class="text-slate-500">Basic Shares Outstanding</span><span id="pos-shares" class="font-medium text-slate-800 mono">—</span></div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between py-1.5 border-b border-slate-100 text-sm"><span class="text-slate-500">Current Share Price</span><span id="pos-price" class="font-semibold text-slate-900 mono">—</span></div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-100 text-sm"><span class="text-slate-500">Today's Change</span><span id="pos-change" class="font-semibold mono">—</span></div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-100 text-sm"><span class="text-slate-500">After Hours Price</span><span id="pos-after-hours" class="font-medium text-slate-800 mono">—</span></div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-100 text-sm"><span class="text-slate-500">52wk Range</span><span id="pos-range" class="font-medium text-slate-800 mono">—</span></div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-100 text-sm"><span class="text-slate-500">Next Earnings Date</span><span id="pos-earnings-date" class="font-medium text-slate-800 mono">—</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 mt-8">Statistics (TTM)</h3>
+
+            <!-- 2. VALUATION AND MULTIPLES GRID BLOCK (From Screenshot 2) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Earnings-Based Valuation -->
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+                    <h4 class="text-sm font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Earnings-Based Valuation</h4>
+                    <div class="space-y-2.5 text-sm">
+                        <div class="flex justify-between"><span class="text-slate-500">Price to Earnings (P/E)</span><span id="stat-pe" class="font-semibold mono">—</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">Forward Price to Earnings (Forward P/E)</span><span id="stat-fwd-pe" class="mono">—</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">Price/Earnings Growth (P/EG)</span><span id="stat-peg" class="mono">—</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">Earnings Yield</span><span id="stat-yield" class="mono">—</span></div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-                    <div class="space-y-3">
-                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
-                            <span class="text-slate-500">Market Capitalization</span>
-                            <span id="card-market-cap" class="font-semibold text-slate-900 mono">—</span>
-                        </div>
-                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
-                            <span class="text-slate-500">Turnover (Revenue)</span>
-                            <span id="card-turnover" class="font-medium text-slate-700 mono">—</span>
-                        </div>
-                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
-                            <span class="text-slate-500">Net Profit Margin</span>
-                            <span id="card-net-profit" class="font-medium text-slate-700 mono">—</span>
-                        </div>
-                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
-                            <span class="text-slate-500">Free Cash Flow (FCF)</span>
-                            <span id="card-fcf" class="font-medium text-slate-700 mono">—</span>
-                        </div>
-                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
-                            <span class="text-slate-500">Debt to Equity (D/E)</span>
-                            <span id="card-de" class="font-medium text-slate-700 mono">—</span>
+                <!-- Revenue & Cash Flow Metrics -->
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+                    <h4 class="text-sm font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Revenue & Cash Flow Metrics</h4>
+                    <div class="space-y-2.5 text-sm">
+                        <div class="flex justify-between"><span class="text-slate-500">Price to Sales (P/S)</span><span id="stat-ps" class="mono">—</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">Price to Cash Flow (P/CF)</span><span id="stat-pcf" class="mono">—</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">Price to Free Cash Flow (P/FCF)</span><span id="stat-pfcf" class="mono">—</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">Free Cash Flow Yield</span><span id="stat-fcf-yield" class="mono">—</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. ASSET & EV STRUCTURES BLOCK (From Screenshot 2 Bottom) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Asset-Based Metrics -->
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+                    <h4 class="text-sm font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Asset-Based Metrics</h4>
+                    <div class="space-y-2.5 text-sm">
+                        <div class="flex justify-between"><span class="text-slate-500">Price to Book (P/B)</span><span id="stat-pb" class="mono">—</span></div>
+                    </div>
+                </div>
+
+                <!-- Enterprise Value Multiples -->
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+                    <h4 class="text-sm font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Enterprise Value Multiples</h4>
+                    <div class="space-y-2.5 text-sm">
+                        <div class="flex justify-between"><span class="text-slate-500">EV to EBITDA</span><span id="stat-ev-ebitda" class="mono">—</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">EV to Sales</span><span id="stat-ev-sales" class="mono">—</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. PERFORMANCE AND BALANCE PROFILE BLOCK (From Screenshot 3) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Profitability Section -->
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+                    <h4 class="text-sm font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Profitability</h4>
+                    <div class="space-y-2.5 text-sm">
+                        <div class="flex justify-between"><span class="text-slate-500">Profit Margin</span><span id="stat-prof-margin" class="mono">—</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">Operating Profit Margin</span><span id="stat-op-margin" class="mono">—</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">Return on Equity (ROE)</span><span id="stat-roe" class="font-medium text-emerald-700 mono">—</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">Return on Invested Capital (ROIC)</span><span id="stat-roic" class="mono">—</span></div>
+                    </div>
+                </div>
+
+                <!-- Growth and Financial Health Columns stacked side by side -->
+                <div class="space-y-6">
+                    <!-- Growth Section -->
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+                        <h4 class="text-sm font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Growth (CAGR)</h4>
+                        <div class="space-y-2.5 text-sm">
+                            <div class="flex justify-between"><span class="text-slate-500">Revenue 3y</span><span id="stat-rev-3y" class="mono">—</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Revenue 5y</span><span id="stat-rev-5y" class="mono">—</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Revenue 10y</span><span id="stat-rev-10y" class="mono">—</span></div>
                         </div>
                     </div>
 
-                    <div class="space-y-3">
-                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
-                            <span class="text-slate-500">Trailing P/E Ratio</span>
-                            <span id="card-pe" class="font-semibold text-slate-900 mono">—</span>
-                        </div>
-                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
-                            <span class="text-slate-500">Forward P/E Ratio</span>
-                            <span id="card-fwd-pe" class="font-medium text-slate-700 mono">—</span>
-                        </div>
-                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
-                            <span class="text-slate-500">PEG Ratio</span>
-                            <span id="card-peg" class="font-medium text-slate-700 mono">—</span>
-                        </div>
-                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
-                            <span class="text-slate-500">Return on Equity (ROE)</span>
-                            <span id="card-roe" class="font-medium text-emerald-700 mono">—</span>
-                        </div>
-                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
-                            <span class="text-slate-500">Dividend Yield</span>
-                            <span id="card-div" class="font-medium text-slate-700 mono">—</span>
+                    <!-- Financial Health Section -->
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+                        <h4 class="text-sm font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Financial Health</h4>
+                        <div class="space-y-2.5 text-sm">
+                            <div class="flex justify-between"><span class="text-slate-500">Free Cash Flow</span><span id="stat-fcf" class="mono">—</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Net Income</span><span id="stat-net-income" class="mono">—</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Net Debt</span><span id="stat-net-debt" class="mono">—</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Debt to Equity</span><span id="stat-de" class="mono">—</span></div>
                         </div>
                     </div>
                 </div>
@@ -203,7 +255,15 @@
             if (val === undefined || val === null || val === "N/A" || val === "None" || val === "" || val === 0) return "—";
             const num = parseFloat(val);
             if (isNaN(num)) return val;
-            return num <= 1.0 && num > 0 ? `${(num * 100).toFixed(1)}%` : `${num.toFixed(1)}%`;
+            return num <= 1.0 && num > 0 ? `${(num * 100).toFixed(2)}%` : `${num.toFixed(2)}%`;
+        }
+
+        function formatChange(val) {
+            if (val === undefined || val === null || val === "") return "—";
+            const num = parseFloat(val);
+            if (isNaN(num)) return val;
+            if (num < 0) return `<span class="text-rose-600 bg-rose-50 px-2 py-0.5 rounded">${num.toFixed(2)}</span>`;
+            return `<span class="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">+${num.toFixed(2)}</span>`;
         }
 
         async function fetchFinancialsData() {
@@ -217,18 +277,13 @@
                 return;
             }
 
-            if (!stock_analysis || stock_analysis.length === 0) {
-                document.getElementById('table-body').innerHTML = `<tr><td colspan="11" class="py-16 text-center text-slate-400">NO SEC REGISTERED METRICS LOADED</td></tr>`;
-                return;
-            }
-
             stock_analysis.sort((a, b) => (a.ticker || '').localeCompare(b.ticker || ''));
-            globalStockCache = stock_analysis; // Cache data so we can look up details instantly
+            globalStockCache = stock_analysis;
 
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = ""; 
             
-            stock_analysis.forEach((stock, index) => {
+            stock_analysis.forEach((stock) => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50/80 transition-colors";
                 tr.innerHTML = `
@@ -257,39 +312,59 @@
             const asset = globalStockCache.find(s => s.ticker === ticker);
             if (!asset) return;
 
-            // Hide the generic pipeline table, show the single asset workspace card
             document.getElementById('pipeline-view').classList.add('hidden');
             document.getElementById('search-container').classList.add('invisible');
             document.getElementById('detail-view').classList.remove('hidden');
 
-            // Swap out header labels to fit context
             document.getElementById('page-title').innerText = "Asset Analysis Profile";
             document.getElementById('page-subtitle').innerText = "Deep dive structural position and current multiples valuation window.";
 
-            // Populate the clean metric profile data fields
+            // 1. Map Top Profile Hero
             document.getElementById('detail-ticker').innerText = asset.ticker || '---';
             document.getElementById('detail-name').innerText = asset.stock_name || 'Unknown Asset';
-            
-            document.getElementById('card-market-cap').innerText = formatVal(asset.market_cap);
-            document.getElementById('card-turnover').innerText = formatVal(asset.turnover);
-            document.getElementById('card-net-profit').innerText = formatVal(asset.net_profit);
-            document.getElementById('card-fcf').innerText = formatVal(asset.free_cash_flow);
-            document.getElementById('card-de').innerText = formatVal(asset.debt_to_equity);
-            
-            document.getElementById('card-pe').innerText = formatVal(asset.pe_ratio);
-            document.getElementById('card-fwd-pe').innerText = formatVal(asset.forward_pe);
-            document.getElementById('card-peg').innerText = formatVal(asset.peg_ratio);
-            document.getElementById('card-roe').innerText = formatPct(asset.roe_percent);
-            document.getElementById('card-div').innerText = formatPct(asset.div_yield);
+            document.getElementById('pos-market-cap').innerText = formatVal(asset.market_cap);
+            document.getElementById('pos-website').innerHTML = asset.website ? `<a href="${asset.website}" target="_blank" class="hover:underline">${asset.website.replace('https://','')} ↗</a>` : '—';
+            document.getElementById('pos-revenue').innerText = formatVal(asset.turnover || asset.revenue);
+            document.getElementById('pos-shares').innerText = formatVal(asset.shares_outstanding);
+            document.getElementById('pos-price').innerText = formatVal(asset.current_price, "$");
+            document.getElementById('pos-change').innerHTML = formatChange(asset.todays_change);
+            document.getElementById('pos-after-hours').innerText = formatVal(asset.after_hours_price, "$");
+            document.getElementById('pos-range').innerText = formatVal(asset.fifty_two_week_range);
+            document.getElementById('pos-earnings-date').innerText = formatVal(asset.next_earnings_date);
+
+            // 2. Map Valuation & Cash Flow Blocks
+            document.getElementById('stat-pe').innerText = formatVal(asset.pe_ratio);
+            document.getElementById('stat-fwd-pe').innerText = formatVal(asset.forward_pe);
+            document.getElementById('stat-peg').innerText = formatVal(asset.peg_ratio);
+            document.getElementById('stat-yield').innerText = formatVal(asset.earnings_yield);
+            document.getElementById('stat-ps').innerText = formatVal(asset.price_to_sales);
+            document.getElementById('stat-pcf').innerText = formatVal(asset.price_to_cash_flow);
+            document.getElementById('stat-pfcf').innerText = formatVal(asset.price_to_fcf);
+            document.getElementById('stat-fcf-yield').innerText = formatVal(asset.fcf_yield);
+
+            // 3. Map Asset & Enterprise Multiples
+            document.getElementById('stat-pb').innerText = formatVal(asset.price_to_book);
+            document.getElementById('stat-ev-ebitda').innerText = formatVal(asset.ev_to_ebitda);
+            document.getElementById('stat-ev-sales').innerText = formatVal(asset.ev_to_sales);
+
+            // 4. Map Profitability, Growth & Health
+            document.getElementById('stat-prof-margin').innerText = formatPct(asset.profit_margin);
+            document.getElementById('stat-op-margin').innerText = formatPct(asset.operating_margin);
+            document.getElementById('stat-roe').innerText = formatPct(asset.roe_percent);
+            document.getElementById('stat-roic').innerText = formatPct(asset.roic_percent);
+            document.getElementById('stat-rev-3y').innerText = formatPct(asset.revenue_3y_cagr);
+            document.getElementById('stat-rev-5y').innerText = formatPct(asset.revenue_5y_cagr);
+            document.getElementById('stat-rev-10y').innerText = formatPct(asset.revenue_10y_cagr);
+            document.getElementById('stat-fcf').innerText = formatVal(asset.free_cash_flow);
+            document.getElementById('stat-net-income').innerText = formatVal(asset.net_profit || asset.net_income);
+            document.getElementById('stat-net-debt').innerText = formatVal(asset.net_debt);
+            document.getElementById('stat-de').innerText = formatVal(asset.debt_to_equity);
         }
 
         function showPipelineView() {
-            // Restore structural layouts
             document.getElementById('detail-view').classList.add('hidden');
             document.getElementById('pipeline-view').classList.remove('hidden');
             document.getElementById('search-container').classList.remove('invisible');
-
-            // Restore Main Header Context labels
             document.getElementById('page-title').innerText = "Fundamental Metrics Matrix";
             document.getElementById('page-subtitle').innerText = "Deep capital structure, liquidity data, and earnings multiples.";
         }
