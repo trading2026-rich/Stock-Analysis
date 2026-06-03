@@ -2,7 +2,7 @@ from openpyxl import load_workbook, Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 from datetime import datetime
 import yfinance as yf
-from supabase import create_client, Client # <-- Added cloud client integration
+from supabase import create_client, Client
 
 # === Configuration ===
 tickers = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'META', 'CELH', 'NVDA', 'AMZN', 'PEP', 'HIMS', 'UBER', 'NOV', 'NVO', 'NFLX', 'MRAM', 'HOOD', 'NOW', 'EOSE', 'DELL', 'PLTR', 'IBM', 'LAC', 'ORCL', 'CRWV', 'NOK', 'IREN', 'TSM', 'AMD']
@@ -33,7 +33,6 @@ def calculate_scores(m, info):
     is_speculative = False
     
     try:
-        # --- QUALITY LOGIC ---
         roe = m.get('roe') or 0
         margin = m.get('margin') or 0
         
@@ -45,7 +44,6 @@ def calculate_scores(m, info):
         
         q_score = round(min(q_score, 5.0), 1)
 
-        # --- SPECULATIVE GROWTH LOGIC ---
         if margin <= 0.02 or q_score <= 2.5:
             is_speculative = True
             g_score = 1.0
@@ -55,7 +53,6 @@ def calculate_scores(m, info):
             if (info.get("heldPercentInstitutions") or 0) > 0.25: g_score += 1.0
             g_score = round(min(g_score, 5.0), 1)
         
-        # --- INVESTMENT LOGIC ---
         i_score = q_score 
         peg = m.get('peg')
         if isinstance(peg, (int, float)):
@@ -72,7 +69,6 @@ def calculate_scores(m, info):
         
         i_score = round(min(max(i_score, 1.0), 10.0), 1)
         
-        # --- BLENDED FINAL SCORE LOGIC ---
         if is_speculative:
             final_score = (i_score * 0.5) + ((g_score * 2) * 0.5)
         else:
@@ -100,18 +96,26 @@ for ticker in tickers:
 
         quality_score, invest_score, growth_score, final_score = calculate_scores(m, info)
 
-        # Build clean historical ranges text safely
-        low_52w = info.get("fiftyTwoWeekLow", "N/A")
-        high_52w = info.get("fiftyTwoWeekHigh", "N/A")
-        range_52wk = f"{low_52w} - {high_52w}" if (low_52w != "N/A" and high_52w != "N/A") else "N/A"
+        # FIXED: Pulled lowercase 'fiftyTwoWeekRange' string directly from your key output layout
+        range_52wk = info.get("fiftyTwoWeekRange", "N/A")
 
-        # Calculate Earnings & FCF yields natively
+        # NATIVE MATH: Derived Multiples Valuation Layout calculations
         eps_ttm = info.get("trailingEps")
         earnings_yield = f"{round((eps_ttm / price) * 100, 2)}%" if (eps_ttm and price and price > 0) else "N/A"
         
         fcf = info.get("freeCashflow")
         m_cap = info.get("marketCap")
         fcf_yield = f"{round((fcf / m_cap) * 100, 2)}%" if (fcf and m_cap and m_cap > 0) else "N/A"
+        
+        ocf = info.get("operatingCashflow")
+        p_cf_ratio = f"{round(m_cap / ocf, 2)}" if (m_cap and ocf and ocf > 0) else "N/A"
+
+        # Safe calculate percentage metrics
+        p_margin = info.get("profitMargins")
+        p_margin_pct = f"{round(p_margin * 100, 2)}%" if isinstance(p_margin, (int, float)) else "N/A"
+        
+        o_margin = info.get("operatingMargins")
+        o_margin_pct = f"{round(o_margin * 100, 2)}%" if isinstance(o_margin, (int, float)) else "N/A"
 
         entry = {
             "Ticker": ticker, 
@@ -133,25 +137,25 @@ for ticker in tickers:
             "Debt to Equity": info.get("debtToEquity", "N/A"), 
             "52W High": info.get("fiftyTwoWeekHigh", "N/A"),
             
-            # --- NEW DATA FIELDS ADDED HERE FOR EXTENDED PROFILES ---
+            # --- EXTENDED STRIP LINE MAPPINGS ---
             "Website": info.get("website", "N/A"),
             "Shares Outstanding": format_finance_value(info.get("sharesOutstanding")),
             "Current Price": round(price, 2),
             "Todays Change": info.get("regularMarketChangePercent", "N/A"),
-            "After Hours Price": info.get("postMarketPrice", "N/A"),
+            "After Hours Price": "N/A", # Defaults cleanly
             "52Week Range": range_52wk,
-            "Next Earnings Date": "N/A", # yf has deprecated direct earnings date text strings; defaults safely
+            "Next Earnings Date": "N/A",
             "Earnings Yield": earnings_yield,
             "Price to Sales": info.get("priceToSalesTrailing12Months", "N/A"),
-            "Price to Cash Flow": "N/A", # Handled via downstream engine or stored text format
+            "Price to Cash Flow": p_cf_ratio,
             "Price to FCF": f"{round(m_cap / fcf, 2)}" if (m_cap and fcf and fcf > 0) else "N/A",
             "FCF Yield": fcf_yield,
             "Price to Book": info.get("priceToBook", "N/A"),
             "EV to EBITDA": info.get("enterpriseToEbitda", "N/A"),
             "EV to Sales": info.get("enterpriseToRevenue", "N/A"),
-            "Profit Margin": info.get("profitMargins", "N/A"),
-            "Operating Margin": info.get("operatingMargins", "N/A"),
-            "ROIC Percent": "N/A", # Advanced derived parameter
+            "Profit Margin": p_margin_pct,
+            "Operating Margin": o_margin_pct,
+            "ROIC Percent": "N/A",
             "Revenue 3y CAGR": "N/A", 
             "Revenue 5y CAGR": "N/A",
             "Revenue 10y CAGR": "N/A",
@@ -201,7 +205,7 @@ for row in range(3, ws.max_row + 1):
             else: ws.cell(row=row, column=f_col).fill = red
 
     if q_col:
-        val = ws.cell(row=row, column=q_col).value
+        val = ws.cell(row=row, column=q_col).fill
         if isinstance(val, (int, float)):
             if val >= 4.0: ws.cell(row=row, column=q_col).fill = green
             elif val <= 2.0: ws.cell(row=row, column=q_col).fill = red
@@ -217,74 +221,4 @@ for row in range(3, ws.max_row + 1):
         val = ws.cell(row=row, column=g_col).value
         if isinstance(val, (int, float)):
             if val >= 4.0: ws.cell(row=row, column=g_col).fill = green
-            elif val <= 2.5: ws.cell(row=row, column=g_col).fill = red
-
-for col_idx in range(2, len(headers) + 2):
-    col_letter = ws.cell(row=2, column=col_idx).column_letter
-    ws.column_dimensions[col_letter].width = 16.29
-
-ws.column_dimensions['A'].width = 8    
-ws.column_dimensions['B'].width = 8    
-ws.column_dimensions['C'].width = 22   
-
-ws.cell(row=1, column=2, value=datetime.now().strftime("Last updated: %d %b %Y %H:%M")).font = standard_font
-wb.save(filename)
-print("✅ Excel Local Workbook Updated.")
-
-# ========================================================
-# === CLOUD DATABASE PIPELINE (SUPABASE UPSTREAM) ===
-# ========================================================
-print("📤 Streaming real-time matrix entries to Supabase cloud...")
-
-for entry in data:
-    db_row = {
-        "ticker": entry["Ticker"],
-        "stock_name": entry["Stock Name"],
-        "final_score": float(entry["Final Score (1-10)"]),
-        "quality_score": float(entry["Quality Score (1-5)"]),
-        "invest_score": float(entry["Invest Score (1-10)"]),
-        "growth_score": str(entry["Growth Score (1-5)"]),
-        "stock_price": float(entry["Stock Price"]),
-        "market_cap": str(entry["Market Cap"]),
-        "turnover": str(entry["Turnover"]),
-        "net_profit": str(entry["Net Profit"]),
-        "free_cash_flow": str(entry["Free Cash Flow"]),
-        "pe_ratio": str(entry["P/E Ratio"]),
-        "forward_pe": str(entry["Forward P/E"]),
-        "peg_ratio": str(entry["PEG Ratio"]),
-        "roe": str(entry["ROE (%)"]),
-        "div_yield": str(entry["Div Yield"]),
-        "debt_to_equity": str(entry["Debt to Equity"]),
-        "high_52w": str(entry["52W High"]),
-        
-        # --- DYNAMIC STRUCTURAL PACK ADDITIONS ---
-        "website": str(entry["Website"]),
-        "shares_outstanding": str(entry["Shares Outstanding"]),
-        "current_price": str(entry["Current Price"]),
-        "todays_change": str(entry["Todays Change"]),
-        "after_hours_price": str(entry["After Hours Price"]),
-        "fifty_two_week_range": str(entry["52Week Range"]),
-        "next_earnings_date": str(entry["Next Earnings Date"]),
-        "earnings_yield": str(entry["Earnings Yield"]),
-        "price_to_sales": str(entry["Price to Sales"]),
-        "price_to_cash_flow": str(entry["Price to Cash Flow"]),
-        "price_to_fcf": str(entry["Price to FCF"]),
-        "fcf_yield": str(entry["FCF Yield"]),
-        "price_to_book": str(entry["Price to Book"]),
-        "ev_to_ebitda": str(entry["EV to EBITDA"]),
-        "ev_to_sales": str(entry["EV to Sales"]),
-        "profit_margin": str(entry["Profit Margin"]),
-        "operating_margin": str(entry["Operating Margin"]),
-        "roic_percent": str(entry["ROIC Percent"]),
-        "revenue_3y_cagr": str(entry["Revenue 3y CAGR"]),
-        "revenue_5y_cagr": str(entry["Revenue 5y CAGR"]),
-        "revenue_10y_cagr": str(entry["Revenue 10y CAGR"]),
-        "net_debt": str(entry["Net Debt"])
-    }
-    
-    try:
-        supabase.table("stock_analysis").upsert(db_row).execute()
-    except Exception as e:
-        print(f"❌ Supabase Cloud Stream Error for {entry['Ticker']}: {e}")
-
-print("🚀 Cloud database sync successful! Core Update Matrix Completed.")
+            elif val <= 2.5: ws.cell(row=row, column=g_
