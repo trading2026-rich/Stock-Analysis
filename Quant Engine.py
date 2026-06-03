@@ -253,13 +253,18 @@ print("✅ Excel Local Workbook Updated.")
 # === Cloud Database Sync ===
 print("📤 Streaming real-time matrix entries to Supabase cloud...")
 
+# ========================================================
+# === CLOUD DATABASE PIPELINE (SUPABASE SYNC) ===
+# ========================================================
+print("📤 Streaming real-time matrix entries to Supabase cloud...")
+
 for entry in data:
     db_row = {
         "ticker": entry["Ticker"],
         "stock_name": entry["Stock Name"],
-        "final_score": float(entry["Final Score (1-10)"]),
-        "quality_score": float(entry["Quality Score (1-5)"]),
-        "invest_score": float(entry["Invest Score (1-10)"]),
+        "final_score": float(entry["Final Score (1-10)"]) if isinstance(entry["Final Score (1-10)"], (int, float)) else 0.0,
+        "quality_score": float(entry["Quality Score (1-5)"]) if isinstance(entry["Quality Score (1-5)"], (int, float)) else 0.0,
+        "invest_score": float(entry["Invest Score (1-10)"]) if isinstance(entry["Invest Score (1-10)"], (int, float)) else 0.0,
         "growth_score": str(entry["Growth Score (1-5)"]),
         "stock_price": float(entry["Stock Price"]),
         "market_cap": str(entry["Market Cap"]),
@@ -304,3 +309,4 @@ for entry in data:
         print(f"❌ Supabase Cloud Stream Error for {entry['Ticker']}: {e}")
 
 print("🚀 Cloud database sync successful! Core Update Matrix Completed.")
+    
