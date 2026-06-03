@@ -96,10 +96,8 @@ for ticker in tickers:
 
         quality_score, invest_score, growth_score, final_score = calculate_scores(m, info)
 
-        # FIXED: Pulled lowercase 'fiftyTwoWeekRange' string directly from your key output layout
         range_52wk = info.get("fiftyTwoWeekRange", "N/A")
 
-        # NATIVE MATH: Derived Multiples Valuation Layout calculations
         eps_ttm = info.get("trailingEps")
         earnings_yield = f"{round((eps_ttm / price) * 100, 2)}%" if (eps_ttm and price and price > 0) else "N/A"
         
@@ -110,7 +108,6 @@ for ticker in tickers:
         ocf = info.get("operatingCashflow")
         p_cf_ratio = f"{round(m_cap / ocf, 2)}" if (m_cap and ocf and ocf > 0) else "N/A"
 
-        # Safe calculate percentage metrics
         p_margin = info.get("profitMargins")
         p_margin_pct = f"{round(p_margin * 100, 2)}%" if isinstance(p_margin, (int, float)) else "N/A"
         
@@ -137,12 +134,11 @@ for ticker in tickers:
             "Debt to Equity": info.get("debtToEquity", "N/A"), 
             "52W High": info.get("fiftyTwoWeekHigh", "N/A"),
             
-            # --- EXTENDED STRIP LINE MAPPINGS ---
             "Website": info.get("website", "N/A"),
             "Shares Outstanding": format_finance_value(info.get("sharesOutstanding")),
             "Current Price": round(price, 2),
             "Todays Change": info.get("regularMarketChangePercent", "N/A"),
-            "After Hours Price": "N/A", # Defaults cleanly
+            "After Hours Price": "N/A", 
             "52Week Range": range_52wk,
             "Next Earnings Date": "N/A",
             "Earnings Yield": earnings_yield,
@@ -222,3 +218,72 @@ for row in range(3, ws.max_row + 1):
         if isinstance(val, (int, float)):
             if val >= 4.0: ws.cell(row=row, column=g_col).fill = green
             elif val <= 2.5: ws.cell(row=row, column=g_col).fill = red
+
+for col_idx in range(2, len(headers) + 2):
+    col_letter = ws.cell(row=2, column=col_idx).column_letter
+    ws.column_dimensions[col_letter].width = 16.29
+
+ws.column_dimensions['A'].width = 8    
+ws.column_dimensions['B'].width = 8    
+ws.column_dimensions['C'].width = 22   
+
+ws.cell(row=1, column=2, value=datetime.now().strftime("Last updated: %d %b %Y %H:%M")).font = standard_font
+wb.save(filename)
+print("✅ Excel Local Workbook Updated.")
+
+# ========================================================
+# === ADDED: CLOUD DATABASE PIPELINE (SUPABASE SYNC) ===
+# ========================================================
+print("📤 Streaming real-time matrix entries to Supabase cloud...")
+
+for entry in data:
+    db_row = {
+        "ticker": entry["Ticker"],
+        "stock_name": entry["Stock Name"],
+        "final_score": float(entry["Final Score (1-10)"]),
+        "quality_score": float(entry["Quality Score (1-5)"]),
+        "invest_score": float(entry["Invest Score (1-10)"]),
+        "growth_score": str(entry["Growth Score (1-5)"]),
+        "stock_price": float(entry["Stock Price"]),
+        "market_cap": str(entry["Market Cap"]),
+        "turnover": str(entry["Turnover"]),
+        "net_profit": str(entry["Net Profit"]),
+        "free_cash_flow": str(entry["Free Cash Flow"]),
+        "pe_ratio": str(entry["P/E Ratio"]),
+        "forward_pe": str(entry["Forward P/E"]),
+        "peg_ratio": str(entry["PEG Ratio"]),
+        "roe": str(entry["ROE (%)"]),
+        "div_yield": str(entry["Div Yield"]),
+        "debt_to_equity": str(entry["Debt to Equity"]),
+        "high_52w": str(entry["52W High"]),
+        
+        "website": str(entry["Website"]),
+        "shares_outstanding": str(entry["Shares Outstanding"]),
+        "current_price": str(entry["Current Price"]),
+        "todays_change": str(entry["Todays Change"]),
+        "after_hours_price": str(entry["After Hours Price"]),
+        "fifty_two_week_range": str(entry["52Week Range"]),
+        "next_earnings_date": str(entry["Next Earnings Date"]),
+        "earnings_yield": str(entry["Earnings Yield"]),
+        "price_to_sales": str(entry["Price to Sales"]),
+        "price_to_cash_flow": str(entry["Price to Cash Flow"]),
+        "price_to_fcf": str(entry["Price to FCF"]),
+        "fcf_yield": str(entry["FCF Yield"]),
+        "price_to_book": str(entry["Price to Book"]),
+        "ev_to_ebitda": str(entry["EV to EBITDA"]),
+        "ev_to_sales": str(entry["EV to Sales"]),
+        "profit_margin": str(entry["Profit Margin"]),
+        "operating_margin": str(entry["Operating Margin"]),
+        "roic_percent": str(entry["ROIC Percent"]),
+        "revenue_3y_cagr": str(entry["Revenue 3y CAGR"]),
+        "revenue_5y_cagr": str(entry["Revenue 5y CAGR"]),
+        "revenue_10y_cagr": str(entry["Revenue 10y CAGR"]),
+        "net_debt": str(entry["Net Debt"])
+    }
+    
+    try:
+        supabase.table("stock_analysis").upsert(db_row).execute()
+    except Exception as e:
+        print(f"❌ Supabase Cloud Stream Error for {entry['Ticker']}: {e}")
+
+print("🚀 Cloud database sync successful! Core Update Matrix Completed.")
