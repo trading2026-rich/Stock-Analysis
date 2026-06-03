@@ -61,11 +61,11 @@
         <header class="max-w-6xl mx-auto flex justify-between items-start mb-12 pt-16 px-6">
             <div>
                 <p class="text-xl font-bold tracking-widest text-[#2D4A3E] uppercase mb-1">Financial Analysis</p>
-                <h1 class="text-l font-medium text-slate-800">Fundamental Metrics Matrix</h1>
-                <p class="text-slate-500 mt-2 text-sm">Deep capital structure, liquidity data, and earnings multiples.</p>
+                <h1 id="page-title" class="text-l font-medium text-slate-800">Fundamental Metrics Matrix</h1>
+                <p id="page-subtitle" class="text-slate-500 mt-2 text-sm">Deep capital structure, liquidity data, and earnings multiples.</p>
             </div>
             <div class="flex gap-4 items-center">
-                <div class="bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-2">
+                <div id="search-container" class="bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-2">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mono">Filter:</span>
                     <input type="text" id="tickerSearch" onkeyup="filterTable()" placeholder="TICKER..." class="text-xs font-bold text-slate-700 focus:outline-none w-20 uppercase bg-transparent mono">
                 </div>
@@ -84,7 +84,7 @@
             </div>
         </header>
 
-        <section class="max-w-6xl mx-auto px-6 mb-16">
+        <section id="pipeline-view" class="max-w-6xl mx-auto px-6 mb-16">
             <h3 class="text-sm font-bold text-slate-800 mb-2">Fundamental Analytics Pipeline</h3>
             <p class="text-xs text-slate-500 mb-6 font-medium">Full tracking parameters sorted alphabetically by asset identifier.</p>
             
@@ -117,6 +117,73 @@
                 </div>
             </div>
         </section>
+
+        <section id="detail-view" class="max-w-6xl mx-auto px-6 mb-16 hidden">
+            <button onclick="showPipelineView()" class="text-xs font-semibold text-[#2D4A3E] hover:underline mb-6 flex items-center gap-1">
+                ← Back to Pipeline Matrix
+            </button>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
+                <div class="flex justify-between items-start border-b border-slate-100 pb-6 mb-8">
+                    <div>
+                        <span id="detail-ticker" class="text-2xl font-bold mono bg-slate-100 px-3 py-1 rounded-xl text-slate-900">---</span>
+                        <h2 id="detail-name" class="text-xl font-medium text-slate-800 mt-3">Asset Name</h2>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Analysis Status</p>
+                        <span class="badge-pro green mt-1">Matrix Verified</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                    <div class="space-y-3">
+                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
+                            <span class="text-slate-500">Market Capitalization</span>
+                            <span id="card-market-cap" class="font-semibold text-slate-900 mono">—</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
+                            <span class="text-slate-500">Turnover (Revenue)</span>
+                            <span id="card-turnover" class="font-medium text-slate-700 mono">—</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
+                            <span class="text-slate-500">Net Profit Margin</span>
+                            <span id="card-net-profit" class="font-medium text-slate-700 mono">—</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
+                            <span class="text-slate-500">Free Cash Flow (FCF)</span>
+                            <span id="card-fcf" class="font-medium text-slate-700 mono">—</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
+                            <span class="text-slate-500">Debt to Equity (D/E)</span>
+                            <span id="card-de" class="font-medium text-slate-700 mono">—</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
+                            <span class="text-slate-500">Trailing P/E Ratio</span>
+                            <span id="card-pe" class="font-semibold text-slate-900 mono">—</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
+                            <span class="text-slate-500">Forward P/E Ratio</span>
+                            <span id="card-fwd-pe" class="font-medium text-slate-700 mono">—</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
+                            <span class="text-slate-500">PEG Ratio</span>
+                            <span id="card-peg" class="font-medium text-slate-700 mono">—</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
+                            <span class="text-slate-500">Return on Equity (ROE)</span>
+                            <span id="card-roe" class="font-medium text-emerald-700 mono">—</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-slate-100 text-sm">
+                            <span class="text-slate-500">Dividend Yield</span>
+                            <span id="card-div" class="font-medium text-slate-700 mono">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -124,6 +191,8 @@
         const SUPABASE_URL = "https://oczkxudrukyotgmpvpdv.supabase.co"; 
         const SUPABASE_KEY = "sb_publishable_rKa-z8ZCJ76o2AsUqpGHHg_jAQJ74qN";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let globalStockCache = [];
 
         function formatVal(val, suffix = "") {
             if (val === undefined || val === null || val === "N/A" || val === "None" || val === "") return "—";
@@ -154,17 +223,20 @@
             }
 
             stock_analysis.sort((a, b) => (a.ticker || '').localeCompare(b.ticker || ''));
+            globalStockCache = stock_analysis; // Cache data so we can look up details instantly
 
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = ""; 
             
-            stock_analysis.forEach(stock => {
+            stock_analysis.forEach((stock, index) => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50/80 transition-colors";
                 tr.innerHTML = `
-                    <td class="py-4 px-5 sticky left-0 bg-white font-semibold text-slate-900 mono text-base border-r border-slate-100">
-                        ${stock.ticker || '---'}
-                        <div class="text-[10px] text-slate-400 font-normal max-w-[130px] truncate mt-0.5">${stock.stock_name || 'Unknown Asset'}</div>
+                    <td class="py-4 px-5 sticky left-0 bg-white font-semibold text-slate-900 border-r border-slate-100">
+                        <button onclick="showAssetDetail('${stock.ticker}')" class="text-left hover:text-[#2D4A3E] transition-all focus:outline-none">
+                            <span class="mono text-base font-bold block border-b border-dashed border-slate-300 hover:border-[#2D4A3E]">${stock.ticker || '---'}</span>
+                            <div class="text-[10px] text-slate-400 font-normal max-w-[130px] truncate mt-0.5">${stock.stock_name || 'Unknown Asset'}</div>
+                        </button>
                     </td>
                     <td class="py-4 px-4 text-right font-medium text-slate-900 mono">${formatVal(stock.market_cap || null)}</td>
                     <td class="py-4 px-4 text-right text-slate-600 mono">${formatVal(stock.turnover || null)}</td>
@@ -179,6 +251,47 @@
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        function showAssetDetail(ticker) {
+            const asset = globalStockCache.find(s => s.ticker === ticker);
+            if (!asset) return;
+
+            // Hide the generic pipeline table, show the single asset workspace card
+            document.getElementById('pipeline-view').classList.add('hidden');
+            document.getElementById('search-container').classList.add('invisible');
+            document.getElementById('detail-view').classList.remove('hidden');
+
+            // Swap out header labels to fit context
+            document.getElementById('page-title').innerText = "Asset Analysis Profile";
+            document.getElementById('page-subtitle').innerText = "Deep dive structural position and current multiples valuation window.";
+
+            // Populate the clean metric profile data fields
+            document.getElementById('detail-ticker').innerText = asset.ticker || '---';
+            document.getElementById('detail-name').innerText = asset.stock_name || 'Unknown Asset';
+            
+            document.getElementById('card-market-cap').innerText = formatVal(asset.market_cap);
+            document.getElementById('card-turnover').innerText = formatVal(asset.turnover);
+            document.getElementById('card-net-profit').innerText = formatVal(asset.net_profit);
+            document.getElementById('card-fcf').innerText = formatVal(asset.free_cash_flow);
+            document.getElementById('card-de').innerText = formatVal(asset.debt_to_equity);
+            
+            document.getElementById('card-pe').innerText = formatVal(asset.pe_ratio);
+            document.getElementById('card-fwd-pe').innerText = formatVal(asset.forward_pe);
+            document.getElementById('card-peg').innerText = formatVal(asset.peg_ratio);
+            document.getElementById('card-roe').innerText = formatPct(asset.roe_percent);
+            document.getElementById('card-div').innerText = formatPct(asset.div_yield);
+        }
+
+        function showPipelineView() {
+            // Restore structural layouts
+            document.getElementById('detail-view').classList.add('hidden');
+            document.getElementById('pipeline-view').classList.remove('hidden');
+            document.getElementById('search-container').classList.remove('invisible');
+
+            // Restore Main Header Context labels
+            document.getElementById('page-title').innerText = "Fundamental Metrics Matrix";
+            document.getElementById('page-subtitle').innerText = "Deep capital structure, liquidity data, and earnings multiples.";
         }
 
         function filterTable() {
