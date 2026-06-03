@@ -9,7 +9,6 @@ tickers = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'META', 'CELH', 'NVDA', 'AMZN', 'PEP
 filename = "Stock_Analysis.xlsx"
 
 # === Supabase Keys ===
-# Replace these with your actual Supabase URL and Anon Key from your settings API dashboard
 SUPABASE_URL = "https://oczkxudrukyotgmpvpdv.supabase.co"
 SUPABASE_KEY = "sb_publishable_rKa-z8ZCJ76o2AsUqpGHHg_jAQJ74qN"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -101,6 +100,19 @@ for ticker in tickers:
 
         quality_score, invest_score, growth_score, final_score = calculate_scores(m, info)
 
+        # Build clean historical ranges text safely
+        low_52w = info.get("fiftyTwoWeekLow", "N/A")
+        high_52w = info.get("fiftyTwoWeekHigh", "N/A")
+        range_52wk = f"{low_52w} - {high_52w}" if (low_52w != "N/A" and high_52w != "N/A") else "N/A"
+
+        # Calculate Earnings & FCF yields natively
+        eps_ttm = info.get("trailingEps")
+        earnings_yield = f"{round((eps_ttm / price) * 100, 2)}%" if (eps_ttm and price and price > 0) else "N/A"
+        
+        fcf = info.get("freeCashflow")
+        m_cap = info.get("marketCap")
+        fcf_yield = f"{round((fcf / m_cap) * 100, 2)}%" if (fcf and m_cap and m_cap > 0) else "N/A"
+
         entry = {
             "Ticker": ticker, 
             "Stock Name": info.get("longName", "N/A"),
@@ -119,7 +131,31 @@ for ticker in tickers:
             "ROE (%)": round(info.get("returnOnEquity", 0), 4) if info.get("returnOnEquity") else "N/A",
             "Div Yield": round(info.get("dividendRate", 0) / price, 4) if (info.get("dividendRate") and price) else "N/A",
             "Debt to Equity": info.get("debtToEquity", "N/A"), 
-            "52W High": info.get("fiftyTwoWeekHigh", "N/A")
+            "52W High": info.get("fiftyTwoWeekHigh", "N/A"),
+            
+            # --- NEW DATA FIELDS ADDED HERE FOR EXTENDED PROFILES ---
+            "Website": info.get("website", "N/A"),
+            "Shares Outstanding": format_finance_value(info.get("sharesOutstanding")),
+            "Current Price": round(price, 2),
+            "Todays Change": info.get("regularMarketChangePercent", "N/A"),
+            "After Hours Price": info.get("postMarketPrice", "N/A"),
+            "52Week Range": range_52wk,
+            "Next Earnings Date": "N/A", # yf has deprecated direct earnings date text strings; defaults safely
+            "Earnings Yield": earnings_yield,
+            "Price to Sales": info.get("priceToSalesTrailing12Months", "N/A"),
+            "Price to Cash Flow": "N/A", # Handled via downstream engine or stored text format
+            "Price to FCF": f"{round(m_cap / fcf, 2)}" if (m_cap and fcf and fcf > 0) else "N/A",
+            "FCF Yield": fcf_yield,
+            "Price to Book": info.get("priceToBook", "N/A"),
+            "EV to EBITDA": info.get("enterpriseToEbitda", "N/A"),
+            "EV to Sales": info.get("enterpriseToRevenue", "N/A"),
+            "Profit Margin": info.get("profitMargins", "N/A"),
+            "Operating Margin": info.get("operatingMargins", "N/A"),
+            "ROIC Percent": "N/A", # Advanced derived parameter
+            "Revenue 3y CAGR": "N/A", 
+            "Revenue 5y CAGR": "N/A",
+            "Revenue 10y CAGR": "N/A",
+            "Net Debt": format_finance_value(info.get("totalDebt", 0) - info.get("totalCash", 0))
         }
         data.append(entry)
     except Exception as e: print(f"❌ Error {ticker}: {e}")
@@ -196,7 +232,7 @@ wb.save(filename)
 print("✅ Excel Local Workbook Updated.")
 
 # ========================================================
-# === NEW: CLOUD DATABASE PIPELINE (SUPABASE UPSTREAM) ===
+# === CLOUD DATABASE PIPELINE (SUPABASE UPSTREAM) ===
 # ========================================================
 print("📤 Streaming real-time matrix entries to Supabase cloud...")
 
@@ -219,7 +255,31 @@ for entry in data:
         "roe": str(entry["ROE (%)"]),
         "div_yield": str(entry["Div Yield"]),
         "debt_to_equity": str(entry["Debt to Equity"]),
-        "high_52w": str(entry["52W High"])
+        "high_52w": str(entry["52W High"]),
+        
+        # --- DYNAMIC STRUCTURAL PACK ADDITIONS ---
+        "website": str(entry["Website"]),
+        "shares_outstanding": str(entry["Shares Outstanding"]),
+        "current_price": str(entry["Current Price"]),
+        "todays_change": str(entry["Todays Change"]),
+        "after_hours_price": str(entry["After Hours Price"]),
+        "fifty_two_week_range": str(entry["52Week Range"]),
+        "next_earnings_date": str(entry["Next Earnings Date"]),
+        "earnings_yield": str(entry["Earnings Yield"]),
+        "price_to_sales": str(entry["Price to Sales"]),
+        "price_to_cash_flow": str(entry["Price to Cash Flow"]),
+        "price_to_fcf": str(entry["Price to FCF"]),
+        "fcf_yield": str(entry["FCF Yield"]),
+        "price_to_book": str(entry["Price to Book"]),
+        "ev_to_ebitda": str(entry["EV to EBITDA"]),
+        "ev_to_sales": str(entry["EV to Sales"]),
+        "profit_margin": str(entry["Profit Margin"]),
+        "operating_margin": str(entry["Operating Margin"]),
+        "roic_percent": str(entry["ROIC Percent"]),
+        "revenue_3y_cagr": str(entry["Revenue 3y CAGR"]),
+        "revenue_5y_cagr": str(entry["Revenue 5y CAGR"]),
+        "revenue_10y_cagr": str(entry["Revenue 10y CAGR"]),
+        "net_debt": str(entry["Net Debt"])
     }
     
     try:
