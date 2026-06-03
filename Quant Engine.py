@@ -253,12 +253,17 @@ print("✅ Excel Local Workbook Updated.")
 # === Cloud Database Sync ===
 print("📤 Streaming real-time matrix entries to Supabase cloud...")
 
-# ========================================================
-# === CLOUD DATABASE PIPELINE (SUPABASE SYNC) ===
-# ========================================================
-print("📤 Streaming real-time matrix entries to Supabase cloud...")
-
 for entry in data:
+    # Helper to safely clean up strings or values into true decimal numbers for Supabase
+    def to_float(val):
+        if isinstance(val, (int, float)):
+            return float(round(val, 2))
+        try:
+            cleaned = str(val).replace("%", "").strip()
+            return float(round(float(cleaned), 2))
+        except:
+            return None
+
     db_row = {
         "ticker": entry["Ticker"],
         "stock_name": entry["Stock Name"],
@@ -271,9 +276,11 @@ for entry in data:
         "turnover": str(entry["Turnover"]),
         "net_profit": str(entry["Net Profit"]),
         "free_cash_flow": str(entry["Free Cash Flow"]),
-        "pe_ratio": str(entry["P/E Ratio"]),
-        "forward_pe": str(entry["Forward P/E"]),
-        "peg_ratio": str(entry["PEG Ratio"]),
+        
+        # --- FIXED: Stripping out text wraps so true floats overwrite the db cache ---
+        "pe_ratio": to_float(entry["P/E Ratio"]),
+        "forward_pe": to_float(entry["Forward P/E"]),
+        "peg_ratio": to_float(entry["PEG Ratio"]),
         "roe": str(entry["ROE (%)"]),
         "div_yield": str(entry["Div Yield"]),
         "debt_to_equity": str(entry["Debt to Equity"]),
@@ -287,13 +294,16 @@ for entry in data:
         "fifty_two_week_range": str(entry["52Week Range"]),
         "next_earnings_date": str(entry["Next Earnings Date"]),
         "earnings_yield": str(entry["Earnings Yield"]),
-        "price_to_sales": str(entry["Price to Sales"]),
-        "price_to_cash_flow": str(entry["Price to Cash Flow"]),
-        "price_to_fcf": str(entry["Price to FCF"]),
+        
+        # --- FIXED: Converting metrics to numeric floats ---
+        "price_to_sales": to_float(entry["Price to Sales"]),
+        "price_to_cash_flow": to_float(entry["Price to Cash Flow"]),
+        "price_to_fcf": to_float(entry["Price to FCF"]),
         "fcf_yield": str(entry["FCF Yield"]),
-        "price_to_book": str(entry["Price to Book"]),
-        "ev_to_ebitda": str(entry["EV to EBITDA"]),
-        "ev_to_sales": str(entry["EV to Sales"]),
+        "price_to_book": to_float(entry["Price to Book"]),
+        "ev_to_ebitda": to_float(entry["EV to EBITDA"]),
+        "ev_to_sales": to_float(entry["EV to Sales"]),
+        
         "profit_margin": str(entry["Profit Margin"]),
         "operating_margin": str(entry["Operating Margin"]),
         "roic_percent": str(entry["ROIC Percent"]),
@@ -309,4 +319,3 @@ for entry in data:
         print(f"❌ Supabase Cloud Stream Error for {entry['Ticker']}: {e}")
 
 print("🚀 Cloud database sync successful! Core Update Matrix Completed.")
-    
