@@ -379,19 +379,23 @@
         }
 
         function filterTable() {
-            const input = document.getElementById("tickerSearch");
-            const filter = input.value.toUpperCase();
+            // Read from the new centered search input box
+            const input = document.getElementById("stockSearchInput");
+            const filter = input.value.toUpperCase().trim();
             const table = document.getElementById("financialsTable");
             const tr = table.getElementsByTagName("tr");
 
+            // Loop through all table rows (skipping the header row)
             for (let i = 1; i < tr.length; i++) {
                 const td = tr[i].getElementsByTagName("td")[0];
                 if (td) {
+                    // Pulls both ticker and company name from the first column text block
                     const txtValue = td.textContent || td.innerText;
+                    
                     if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                        tr[i].style.display = "";
+                        tr[i].style.display = ""; // Show row
                     } else {
-                        tr[i].style.display = "none";
+                        tr[i].style.display = "none"; // Hide row
                     }
                 }        
             }
