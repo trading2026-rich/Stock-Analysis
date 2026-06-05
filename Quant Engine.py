@@ -4,9 +4,28 @@ from datetime import datetime
 import yfinance as yf
 from supabase import create_client, Client
 import pandas as pd
+import urllib.request
+import io
 
-# === Configuration ===
-tickers = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'META', 'CELH', 'NVDA', 'AMZN', 'PEP', 'HIMS', 'UBER', 'NOV', 'NVO', 'NFLX', 'MRAM', 'HOOD', 'NOW', 'EOSE', 'DELL', 'PLTR', 'IBM', 'LAC', 'ORCL', 'CRWV', 'NOK', 'IREN', 'TSM', 'AMD']
+print("Fetching live S&P 500 ticker index...")
+sp500_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+
+# Create the request with the browser disguise
+req = urllib.request.Request(
+    sp500_url, 
+    headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+)
+
+# Download the page content safely first
+with urllib.request.urlopen(req) as response:
+    html_content = response.read()
+
+# Pass the already-downloaded content straight into pandas using an in-memory stream
+table = pd.read_html(io.BytesIO(html_content))
+tickers = table[0]['Symbol'].tolist()
+
+# Clean up tickers for yFinance compatibility (e.g., BRK.B to BRK-B)
+tickers = [t.replace('.', '-') for t in tickers]
 filename = "Stock_Analysis.xlsx"
 
 # === Supabase Keys ===
@@ -313,9 +332,32 @@ for entry in data:
         "net_debt": str(entry["Net Debt"])
     }
     
-    try:
-        supabase.table("stock_analysis").upsert(db_row).execute()
-    except Exception as e:
-        print(f"❌ Supabase Cloud Stream Error for {entry['Ticker']}: {e}")
+    import time
 
-print("🚀 Cloud database sync successful! Core Update Matrix Completed.")
+if __name__ == "__main__":
+    while True:
+        print(f"\n🚀 Starting Live Matrix Sync: {datetime.now().strftime('%H:%M:%S')}")
+        
+        try:
+            print("Processing stocks...")
+            for ticker in tickers:
+                data = yf.Ticker(ticker)
+                
+                # ... (your scoring logic and db_row definitions happen inside here) ...
+                
+                # This needs to be indented INSIDE the for loop:
+                try:
+                    supabase.table("stock_analysis").upsert(db_row).execute()
+                except Exception as e:
+                    print(f"❌ Supabase Cloud Stream Error for {entry['Ticker']}: {e}")
+
+            # This sits OUTSIDE the for loop, but INSIDE the main try block:
+            print("🚀 Cloud database sync successful! Core Update Matrix Completed.")
+            
+        except Exception as e:
+            # This aligns with the main try block:
+            print(f"❌ Error during sync: {e}")
+            
+        # This aligns with the main try block at the bottom of the while loop:
+        print("Waiting 5 minutes before next update cycle...")
+        time.sleep(300)
