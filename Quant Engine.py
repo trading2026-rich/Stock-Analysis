@@ -6,6 +6,7 @@ from supabase import create_client, Client
 import pandas as pd
 import urllib.request
 import io
+import time
 
 print("Fetching live S&P 500 ticker index...")
 sp500_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
@@ -100,264 +101,236 @@ def calculate_scores(m, info):
     
     return q_score, i_score, g_score, final_score
 
-data = []
-for ticker in tickers:
-    print(f"Analyzing: {ticker}")
-    stock = yf.Ticker(ticker)
-    info = stock.info
-    
-    # --- DYNAMIC HISTORICAL CAGR CALCULATION MODULE ---
-    rev_3y_cagr = "N/A"
+def to_float(val):
+    if isinstance(val, (int, float)):
+        return float(round(val, 2))
     try:
-        financials = stock.financials
-        if "Total Revenue" in financials.index:
-            revenue_series = financials.loc["Total Revenue"].dropna()
-            if len(revenue_series) >= 4:
-                # Yahoo columns list recent to oldest. Index 0 = Latest, Index 3 = 3 Years Ago
-                latest_rev = revenue_series.iloc[0]
-                old_rev_3y = revenue_series.iloc[3]
-                
-                if latest_rev > 0 and old_rev_3y > 0:
-                    cagr_val = ((latest_rev / old_rev_3y) ** (1 / 3)) - 1
-                    rev_3y_cagr = f"{round(cagr_val * 100, 2)}%"
-    except Exception as e:
-        print(f"⚠️ Could not calculate CAGR for {ticker}: {e}")
+        cleaned = str(val).replace("%", "").strip()
+        return float(round(float(cleaned), 2))
+    except:
+        return None
 
-    try:
-        price = info.get("currentPrice") or info.get("regularMarketPrice") or 0
-        f_eps = info.get("forwardEps")
-        if ticker == 'NVDA' and (f_eps is None or f_eps > 10): f_eps = 8.34
-        
-        m = {'roe': info.get("returnOnEquity"), 'margin': info.get("profitMargins"), 'peg': info.get("pegRatio"),
-             'de': info.get("debtToEquity"), 'curr': info.get("currentRatio"), 'price': price,
-             'high52': info.get("fiftyTwoWeekHigh")}
-
-        quality_score, invest_score, growth_score, final_score = calculate_scores(m, info)
-
-        range_52wk = info.get("fiftyTwoWeekRange", "N/A")
-
-        eps_ttm = info.get("trailingEps")
-        earnings_yield = f"{round((eps_ttm / price) * 100, 2)}%" if (eps_ttm and price and price > 0) else "N/A"
-        
-        fcf = info.get("freeCashflow")
-        m_cap = info.get("marketCap")
-        fcf_yield = f"{round((fcf / m_cap) * 100, 2)}%" if (fcf and m_cap and m_cap > 0) else "N/A"
-        
-        ocf = info.get("operatingCashflow")
-        p_cf_ratio = f"{round(m_cap / ocf, 2)}" if (m_cap and ocf and ocf > 0) else "N/A"
-
-        p_margin = info.get("profitMargins")
-        p_margin_pct = f"{round(p_margin * 100, 2)}%" if isinstance(p_margin, (int, float)) else "N/A"
-        
-        o_margin = info.get("operatingMargins")
-        o_margin_pct = f"{round(o_margin * 100, 2)}%" if isinstance(o_margin, (int, float)) else "N/A"
-
-        entry = {
-            "Ticker": ticker, 
-            "Stock Name": info.get("longName", "N/A"),
-            "Final Score (1-10)": final_score, 
-            "Quality Score (1-5)": quality_score, 
-            "Invest Score (1-10)": invest_score, 
-            "Growth Score (1-5)": growth_score,
-            "Stock Price": round(price, 2),
-            "Market Cap": format_finance_value(info.get("marketCap")),
-            "Turnover": format_finance_value(info.get("totalRevenue")), 
-            "Net Profit": format_finance_value(info.get("netIncomeToCommon")),
-            "Free Cash Flow": format_finance_value(info.get("freeCashflow")),
-            "P/E Ratio": info.get("trailingPE", "N/A"), 
-            "Forward P/E": round(price / f_eps, 2) if (price and f_eps) else "N/A",
-            "PEG Ratio": info.get("pegRatio", "N/A"), 
-            "ROE (%)": round(info.get("returnOnEquity", 0), 4) if info.get("returnOnEquity") else "N/A",
-            "Div Yield": round(info.get("dividendRate", 0) / price, 4) if (info.get("dividendRate") and price) else "N/A",
-            "Debt to Equity": info.get("debtToEquity", "N/A"), 
-            "52W High": info.get("fiftyTwoWeekHigh", "N/A"),
-            
-            "Website": info.get("website", "N/A"),
-            "Shares Outstanding": format_finance_value(info.get("sharesOutstanding")),
-            "Current Price": round(price, 2),
-            "Todays Change": info.get("regularMarketChangePercent", "N/A"),
-            "After Hours Price": "N/A", 
-            "52Week Range": range_52wk,
-            "Next Earnings Date": "N/A",
-            "Earnings Yield": earnings_yield,
-            "Price to Sales": info.get("priceToSalesTrailing12Months", "N/A"),
-            "Price to Cash Flow": p_cf_ratio,
-            "Price to FCF": f"{round(m_cap / fcf, 2)}" if (m_cap and fcf and fcf > 0) else "N/A",
-            "FCF Yield": fcf_yield,
-            "Price to Book": info.get("priceToBook", "N/A"),
-            "EV to EBITDA": info.get("enterpriseToEbitda", "N/A"),
-            "EV to Sales": info.get("enterpriseToRevenue", "N/A"),
-            "Profit Margin": p_margin_pct,
-            "Operating Margin": o_margin_pct,
-            "ROIC Percent": "N/A",
-            "Revenue 3y CAGR": rev_3y_cagr,  # <-- PUSHES DYNAMIC MATH RESULT LIVE
-            "Revenue 5y CAGR": "N/A",
-            "Revenue 10y CAGR": "N/A",
-            "Net Debt": format_finance_value(info.get("totalDebt", 0) - info.get("totalCash", 0))
-        }
-        data.append(entry)
-    except Exception as e: print(f"❌ Error {ticker}: {e}")
-
-# === Workbook Logic ===
-try:
-    wb = load_workbook(filename)
-    ws = wb.active
-except:
-    wb = Workbook()
-    ws = wb.active
-
-for row in range(1, ws.max_row + 2):
-    ws.cell(row=row, column=1).value = None
-    ws.cell(row=row, column=1).fill = PatternFill(fill_type=None)
-
-headers = list(data[0].keys())
-
-for col_idx, header in enumerate(headers, start=2):
-    cell = ws.cell(row=2, column=col_idx, value=header)
-    cell.font, cell.alignment = header_font, center_align
-
-for row_idx, entry in enumerate(data, start=3):
-    for col_idx, header in enumerate(headers, start=2):
-        cell = ws.cell(row=row_idx, column=col_idx, value=entry.get(header, "N/A"))
-        cell.font, cell.alignment = standard_font, center_align
-        cell.fill = PatternFill(fill_type=None)
-
-header_map = {header: idx + 2 for idx, header in enumerate(headers)}
-green, yellow, red = PatternFill(start_color="C6EFCE", fill_type="solid"), PatternFill(start_color="FFFFCC", fill_type="solid"), PatternFill(start_color="FFC7CE", fill_type="solid")
-
-for row in range(3, ws.max_row + 1):
-    f_col = header_map.get("Final Score (1-10)")
-    q_col = header_map.get("Quality Score (1-5)")
-    i_col = header_map.get("Invest Score (1-10)")
-    g_col = header_map.get("Growth Score (1-5)")
-    
-    if f_col:
-        val = ws.cell(row=row, column=f_col).value
-        if isinstance(val, (int, float)):
-            if val >= 7.5: ws.cell(row=row, column=f_col).fill = green
-            elif val >= 5.0: ws.cell(row=row, column=f_col).fill = yellow
-            else: ws.cell(row=row, column=f_col).fill = red
-
-    if q_col:
-        val = ws.cell(row=row, column=q_col).value
-        if isinstance(val, (int, float)):
-            if val >= 4.0: ws.cell(row=row, column=q_col).fill = green
-            elif val <= 2.0: ws.cell(row=row, column=q_col).fill = red
-            
-    if i_col:
-        val = ws.cell(row=row, column=i_col).value
-        if isinstance(val, (int, float)):
-            if val >= 7.5: ws.cell(row=row, column=i_col).fill = green
-            elif val >= 5.0: ws.cell(row=row, column=i_col).fill = yellow
-            else: ws.cell(row=row, column=i_col).fill = red
-
-    if g_col:
-        val = ws.cell(row=row, column=g_col).value
-        if isinstance(val, (int, float)):
-            if val >= 4.0: ws.cell(row=row, column=g_col).fill = green
-            elif val <= 2.5: ws.cell(row=row, column=g_col).fill = red
-
-for col_idx in range(2, len(headers) + 2):
-    col_letter = ws.cell(row=2, column=col_idx).column_letter
-    ws.column_dimensions[col_letter].width = 16.29
-
-ws.column_dimensions['A'].width = 8    
-ws.column_dimensions['B'].width = 8    
-ws.column_dimensions['C'].width = 22   
-
-ws.cell(row=1, column=2, value=datetime.now().strftime("Last updated: %d %b %Y %H:%M")).font = standard_font
-wb.save(filename)
-print("✅ Excel Local Workbook Updated.")
-
-# === Cloud Database Sync ===
-print("📤 Streaming real-time matrix entries to Supabase cloud...")
-
-for entry in data:
-    # Helper to safely clean up strings or values into true decimal numbers for Supabase
-    def to_float(val):
-        if isinstance(val, (int, float)):
-            return float(round(val, 2))
-        try:
-            cleaned = str(val).replace("%", "").strip()
-            return float(round(float(cleaned), 2))
-        except:
-            return None
-
-    db_row = {
-        "ticker": entry["Ticker"],
-        "stock_name": entry["Stock Name"],
-        "final_score": float(entry["Final Score (1-10)"]) if isinstance(entry["Final Score (1-10)"], (int, float)) else 0.0,
-        "quality_score": float(entry["Quality Score (1-5)"]) if isinstance(entry["Quality Score (1-5)"], (int, float)) else 0.0,
-        "invest_score": float(entry["Invest Score (1-10)"]) if isinstance(entry["Invest Score (1-10)"], (int, float)) else 0.0,
-        "growth_score": str(entry["Growth Score (1-5)"]),
-        "stock_price": float(entry["Stock Price"]),
-        "market_cap": str(entry["Market Cap"]),
-        "turnover": str(entry["Turnover"]),
-        "net_profit": str(entry["Net Profit"]),
-        "free_cash_flow": str(entry["Free Cash Flow"]),
-        
-        # --- FIXED: Stripping out text wraps so true floats overwrite the db cache ---
-        "pe_ratio": to_float(entry["P/E Ratio"]),
-        "forward_pe": to_float(entry["Forward P/E"]),
-        "peg_ratio": to_float(entry["PEG Ratio"]),
-        "roe": str(entry["ROE (%)"]),
-        "div_yield": str(entry["Div Yield"]),
-        "debt_to_equity": str(entry["Debt to Equity"]),
-        "high_52w": str(entry["52W High"]),
-        
-        "website": str(entry["Website"]),
-        "shares_outstanding": str(entry["Shares Outstanding"]),
-        "current_price": str(entry["Current Price"]),
-        "todays_change": str(entry["Todays Change"]),
-        "after_hours_price": str(entry["After Hours Price"]),
-        "fifty_two_week_range": str(entry["52Week Range"]),
-        "next_earnings_date": str(entry["Next Earnings Date"]),
-        "earnings_yield": str(entry["Earnings Yield"]),
-        
-        # --- FIXED: Converting metrics to numeric floats ---
-        "price_to_sales": to_float(entry["Price to Sales"]),
-        "price_to_cash_flow": to_float(entry["Price to Cash Flow"]),
-        "price_to_fcf": to_float(entry["Price to FCF"]),
-        "fcf_yield": str(entry["FCF Yield"]),
-        "price_to_book": to_float(entry["Price to Book"]),
-        "ev_to_ebitda": to_float(entry["EV to EBITDA"]),
-        "ev_to_sales": to_float(entry["EV to Sales"]),
-        
-        "profit_margin": str(entry["Profit Margin"]),
-        "operating_margin": str(entry["Operating Margin"]),
-        "roic_percent": str(entry["ROIC Percent"]),
-        "revenue_3y_cagr": str(entry["Revenue 3y CAGR"]),
-        "revenue_5y_cagr": str(entry["Revenue 5y CAGR"]),
-        "revenue_10y_cagr": str(entry["Revenue 10y CAGR"]),
-        "net_debt": str(entry["Net Debt"])
-    }
-    
-    import time
-
+# === Continuous Loop Execution ===
 if __name__ == "__main__":
     while True:
         print(f"\n🚀 Starting Live Matrix Sync: {datetime.now().strftime('%H:%M:%S')}")
         
         try:
-            print("Processing stocks...")
+            data = []
+            print("Processing and analyzing stocks...")
+            
             for ticker in tickers:
-                data = yf.Ticker(ticker)
+                print(f"Analyzing: {ticker}")
+                stock = yf.Ticker(ticker)
+                info = stock.info
                 
-                # ... (your scoring logic and db_row definitions happen inside here) ...
-                
-                # This needs to be indented INSIDE the for loop:
+                # --- DYNAMIC HISTORICAL CAGR CALCULATION MODULE ---
+                rev_3y_cagr = "N/A"
                 try:
-                    supabase.table("stock_analysis").upsert(db_row).execute()
+                    financials = stock.financials
+                    if "Total Revenue" in financials.index:
+                        revenue_series = financials.loc["Total Revenue"].dropna()
+                        if len(revenue_series) >= 4:
+                            latest_rev = revenue_series.iloc[0]
+                            old_rev_3y = revenue_series.iloc[3]
+                            if latest_rev > 0 and old_rev_3y > 0:
+                                cagr_val = ((latest_rev / old_rev_3y) ** (1 / 3)) - 1
+                                rev_3y_cagr = f"{round(cagr_val * 100, 2)}%"
                 except Exception as e:
-                    print(f"❌ Supabase Cloud Stream Error for {entry['Ticker']}: {e}")
+                    print(f"⚠️ Could not calculate CAGR for {ticker}: {e}")
 
-            # This sits OUTSIDE the for loop, but INSIDE the main try block:
-            print("🚀 Cloud database sync successful! Core Update Matrix Completed.")
-            
+                try:
+                    price = info.get("currentPrice") or info.get("regularMarketPrice") or 0
+                    f_eps = info.get("forwardEps")
+                    if ticker == 'NVDA' and (f_eps is None or f_eps > 10): f_eps = 8.34
+                    
+                    m = {'roe': info.get("returnOnEquity"), 'margin': info.get("profitMargins"), 'peg': info.get("pegRatio"),
+                         'de': info.get("debtToEquity"), 'curr': info.get("currentRatio"), 'price': price,
+                         'high52': info.get("fiftyTwoWeekHigh")}
+
+                    quality_score, invest_score, growth_score, final_score = calculate_scores(m, info)
+                    range_52wk = info.get("fiftyTwoWeekRange", "N/A")
+                    eps_ttm = info.get("trailingEps")
+                    earnings_yield = f"{round((eps_ttm / price) * 100, 2)}%" if (eps_ttm and price and price > 0) else "N/A"
+                    
+                    fcf = info.get("freeCashflow")
+                    m_cap = info.get("marketCap")
+                    fcf_yield = f"{round((fcf / m_cap) * 100, 2)}%" if (fcf and m_cap and m_cap > 0) else "N/A"
+                    
+                    ocf = info.get("operatingCashflow")
+                    p_cf_ratio = f"{round(m_cap / ocf, 2)}" if (m_cap and ocf and ocf > 0) else "N/A"
+                    p_margin = info.get("profitMargins")
+                    p_margin_pct = f"{round(p_margin * 100, 2)}%" if isinstance(p_margin, (int, float)) else "N/A"
+                    
+                    o_margin = info.get("operatingMargins")
+                    o_margin_pct = f"{round(o_margin * 100, 2)}%" if isinstance(o_margin, (int, float)) else "N/A"
+
+                    entry = {
+                        "Ticker": ticker, 
+                        "Stock Name": info.get("longName", "N/A"),
+                        "Final Score (1-10)": final_score, 
+                        "Quality Score (1-5)": quality_score, 
+                        "Invest Score (1-10)": invest_score, 
+                        "Growth Score (1-5)": growth_score,
+                        "Stock Price": round(price, 2),
+                        "Market Cap": format_finance_value(info.get("marketCap")),
+                        "Turnover": format_finance_value(info.get("totalRevenue")), 
+                        "Net Profit": format_finance_value(info.get("netIncomeToCommon")),
+                        "Free Cash Flow": format_finance_value(info.get("freeCashflow")),
+                        "P/E Ratio": info.get("trailingPE", "N/A"), 
+                        "Forward P/E": round(price / f_eps, 2) if (price and f_eps) else "N/A",
+                        "PEG Ratio": info.get("pegRatio", "N/A"), 
+                        "ROE (%)": round(info.get("returnOnEquity", 0), 4) if info.get("returnOnEquity") else "N/A",
+                        "Div Yield": round(info.get("dividendRate", 0) / price, 4) if (info.get("dividendRate") and price) else "N/A",
+                        "Debt to Equity": info.get("debtToEquity", "N/A"), 
+                        "52W High": info.get("fiftyTwoWeekHigh", "N/A"),
+                        "Website": info.get("website", "N/A"),
+                        "Shares Outstanding": format_finance_value(info.get("sharesOutstanding")),
+                        "Current Price": round(price, 2),
+                        "Todays Change": info.get("regularMarketChangePercent", "N/A"),
+                        "After Hours Price": "N/A", 
+                        "52Week Range": range_52wk,
+                        "Next Earnings Date": "N/A",
+                        "Earnings Yield": earnings_yield,
+                        "Price to Sales": info.get("priceToSalesTrailing12Months", "N/A"),
+                        "Price to Cash Flow": p_cf_ratio,
+                        "Price to FCF": f"{round(m_cap / fcf, 2)}" if (m_cap and fcf and fcf > 0) else "N/A",
+                        "FCF Yield": fcf_yield,
+                        "Price to Book": info.get("priceToBook", "N/A"),
+                        "EV to EBITDA": info.get("enterpriseToEbitda", "N/A"),
+                        "EV to Sales": info.get("enterpriseToRevenue", "N/A"),
+                        "Profit Margin": p_margin_pct,
+                        "Operating Margin": o_margin_pct,
+                        "ROIC Percent": "N/A",
+                        "Revenue 3y CAGR": rev_3y_cagr,
+                        "Revenue 5y CAGR": "N/A",
+                        "Revenue 10y CAGR": "N/A",
+                        "Net Debt": format_finance_value(info.get("totalDebt", 0) - info.get("totalCash", 0))
+                    }
+                    data.append(entry)
+
+                    # --- Live Stream to Supabase immediately for each stock ---
+                    db_row = {
+                        "ticker": entry["Ticker"],
+                        "stock_name": entry["Stock Name"],
+                        "final_score": float(entry["Final Score (1-10)"]) if isinstance(entry["Final Score (1-10)"], (int, float)) else 0.0,
+                        "quality_score": float(entry["Quality Score (1-5)"]) if isinstance(entry["Quality Score (1-5)"], (int, float)) else 0.0,
+                        "invest_score": float(entry["Invest Score (1-10)"]) if isinstance(entry["Invest Score (1-10)"], (int, float)) else 0.0,
+                        "growth_score": str(entry["Growth Score (1-5)"]),
+                        "stock_price": float(entry["Stock Price"]),
+                        "market_cap": str(entry["Market Cap"]),
+                        "turnover": str(entry["Turnover"]),
+                        "net_profit": str(entry["Net Profit"]),
+                        "free_cash_flow": str(entry["Free Cash Flow"]),
+                        "pe_ratio": to_float(entry["P/E Ratio"]),
+                        "forward_pe": to_float(entry["Forward P/E"]),
+                        "peg_ratio": to_float(entry["PEG Ratio"]),
+                        "roe": str(entry["ROE (%)"]),
+                        "div_yield": str(entry["Div Yield"]),
+                        "debt_to_equity": str(entry["Debt to Equity"]),
+                        "high_52w": str(entry["52W High"]),
+                        "website": str(entry["Website"]),
+                        "shares_outstanding": str(entry["Shares Outstanding"]),
+                        "current_price": str(entry["Current Price"]),
+                        "todays_change": str(entry["Todays Change"]),
+                        "after_hours_price": str(entry["After Hours Price"]),
+                        "fifty_two_week_range": str(entry["52Week Range"]),
+                        "next_earnings_date": str(entry["Next Earnings Date"]),
+                        "earnings_yield": str(entry["Earnings Yield"]),
+                        "price_to_sales": to_float(entry["Price to Sales"]),
+                        "price_to_cash_flow": to_float(entry["Price to Cash Flow"]),
+                        "price_to_fcf": to_float(entry["Price to FCF"]),
+                        "fcf_yield": str(entry["FCF Yield"]),
+                        "price_to_book": to_float(entry["Price to Book"]),
+                        "ev_to_ebitda": to_float(entry["EV to EBITDA"]),
+                        "ev_to_sales": to_float(entry["EV to Sales"]),
+                        "profit_margin": str(entry["Profit Margin"]),
+                        "operating_margin": str(entry["Operating Margin"]),
+                        "roic_percent": str(entry["ROIC Percent"]),
+                        "revenue_3y_cagr": str(entry["Revenue 3y CAGR"]),
+                        "revenue_5y_cagr": str(entry["Revenue 5y CAGR"]),
+                        "revenue_10y_cagr": str(entry["Revenue 10y CAGR"]),
+                        "net_debt": str(entry["Net Debt"])
+                    }
+
+                    try:
+                        supabase.table("stock_analysis").upsert(db_row).execute()
+                    except Exception as e:
+                        print(f"❌ Supabase Cloud Stream Error for {ticker}: {e}")
+
+                except Exception as e: 
+                    print(f"❌ Error compiling entry data for {ticker}: {e}")
+
+            # === Workbook Local Saving ===
+            try:
+                wb = load_workbook(filename)
+                ws = wb.active
+            except:
+                wb = Workbook()
+                ws = wb.active
+
+            for row in range(1, ws.max_row + 2):
+                ws.cell(row=row, column=1).value = None
+                ws.cell(row=row, column=1).fill = PatternFill(fill_type=None)
+
+            headers = list(data[0].keys())
+
+            for col_idx, header in enumerate(headers, start=2):
+                cell = ws.cell(row=2, column=col_idx, value=header)
+                cell.font, cell.alignment = header_font, center_align
+
+            for row_idx, entry in enumerate(data, start=3):
+                for col_idx, header in enumerate(headers, start=2):
+                    cell = ws.cell(row=row_idx, column=col_idx, value=entry.get(header, "N/A"))
+                    cell.font, cell.alignment = standard_font, center_align
+                    cell.fill = PatternFill(fill_type=None)
+
+            header_map = {header: idx + 2 for idx, header in enumerate(headers)}
+            green = PatternFill(start_color="C6EFCE", fill_type="solid")
+            yellow = PatternFill(start_color="FFFFCC", fill_type="solid")
+            red = PatternFill(start_color="FFC7CE", fill_type="solid")
+
+            for row in range(3, ws.max_row + 1):
+                f_col, q_col = header_map.get("Final Score (1-10)"), header_map.get("Quality Score (1-5)")
+                i_col, g_col = header_map.get("Invest Score (1-10)"), header_map.get("Growth Score (1-5)")
+                
+                if f_col:
+                    val = ws.cell(row=row, column=f_col).value
+                    if isinstance(val, (int, float)):
+                        if val >= 7.5: ws.cell(row=row, column=f_col).fill = green
+                        elif val >= 5.0: ws.cell(row=row, column=f_col).fill = yellow
+                        else: ws.cell(row=row, column=f_col).fill = red
+                if q_col:
+                    val = ws.cell(row=row, column=q_col).value
+                    if isinstance(val, (int, float)):
+                        if val >= 4.0: ws.cell(row=row, column=q_col).fill = green
+                        elif val <= 2.0: ws.cell(row=row, column=q_col).fill = red
+                if i_col:
+                    val = ws.cell(row=row, column=i_col).value
+                    if isinstance(val, (int, float)):
+                        if val >= 7.5: ws.cell(row=row, column=i_col).fill = green
+                        elif val >= 5.0: ws.cell(row=row, column=i_col).fill = yellow
+                        else: ws.cell(row=row, column=i_col).fill = red
+                if g_col:
+                    val = ws.cell(row=row, column=g_col).value
+                    if isinstance(val, (int, float)):
+                        if val >= 4.0: ws.cell(row=row, column=g_col).fill = green
+                        elif val <= 2.5: ws.cell(row=row, column=g_col).fill = red
+
+            for col_idx in range(2, len(headers) + 2):
+                col_letter = ws.cell(row=2, column=col_idx).column_letter
+                ws.column_dimensions[col_letter].width = 16.29
+
+            ws.column_dimensions['A'].width = 8    
+            ws.column_dimensions['B'].width = 8    
+            ws.column_dimensions['C'].width = 22   
+
+            ws.cell(row=1, column=2, value=datetime.now().strftime("Last updated: %d %b %Y %H:%M")).font = standard_font
+            wb.save(filename)
+            print("✅ Excel Local Workbook Updated and Cloud Data Sync Completed Successfully.")
+
         except Exception as e:
-            # This aligns with the main try block:
-            print(f"❌ Error during sync: {e}")
-            
-        # This aligns with the main try block at the bottom of the while loop:
+            print(f"❌ Critical Error during loop run: {e}")
+
         print("Waiting 5 minutes before next update cycle...")
         time.sleep(300)
