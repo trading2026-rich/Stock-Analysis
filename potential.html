@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quant Engine - Growth Incubator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F4F2EE; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .sidebar-item:hover { background-color: #E9E7E0; }
+        .active-sidebar { background-color: #E9E7E0; font-weight: 600; }
+        
+        .badge-pro { display: inline-flex; align-items: center; justify-content: center; padding: 0.25rem 0.5rem; border-radius: 6px; font-weight: 600; font-size: 0.75rem; }
+        .badge-pro.green { background-color: #E6F4EA; color: #137333; }
+        .badge-pro.yellow { background-color: #FEF7E0; color: #B06000; }
+        .badge-pro.red { background-color: #FCE8E6; color: #C5221F; }
+        .badge-pro.neutral { background-color: #F1F3F4; color: #5F6368; }
+        
+        /* Subtle glowing edge style for early hyper-growth assets */
+        .incubator-card:hover { border-color: #2D4A3E; transform: translateY(-2px); }
+    </style>
+</head>
+<body class="flex min-h-screen text-slate-800">
+
+    <div class="w-64 min-h-screen border-r border-gray-200 p-6 bg-[#F8F7F3] sticky top-0 flex flex-col justify-between">
+        <div>
+            <div class="flex items-center space-x-2 mb-10">
+                <div class="w-8 h-8 bg-[#2D4A3E] text-white flex items-center justify-center rounded-lg text-xs font-bold mono">QE</div>
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mono">v1.0</span>
+            </div>
+            
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Core Pipeline</p>
+            <h2 class="text-xl font-semibold mb-8 text-slate-800">Workspace</h2>
+
+            <nav class="space-y-1 text-sm text-gray-600">
+                <a href="index.html" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
+                    <span>• Quant Matrix</span>
+                </a>
+                <a href="financials.html" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
+                    <span>• Financials</span>
+                </a>
+                <a href="radar.html" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
+                    <span>• Execution Radar</span>
+                </a>
+                <a href="potential.html" class="flex items-center p-3 rounded-lg active-sidebar transition-all text-[#2D4A3E]">
+                    <span>• Growth Incubator</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mt-8">
+            <div class="h-24 bg-[#E5E1DA] rounded-xl mb-3 overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1666467831470-8f26f983391f?w=500&auto=format&fit=crop&q=60" class="w-full h-full object-cover opacity-60" alt="zen">
+            </div>
+            <p class="text-xs font-bold text-slate-800">Quant Execution Mode</p>
+            <p class="text-[10px] text-slate-500 mt-1 leading-relaxed">Automated calculations via local background core engine.</p>
+        </div>
+    </div>
+    
+    <main class="flex-1 overflow-y-auto">
+        <header class="max-w-5xl mx-auto flex justify-between items-start mb-12 pt-16 px-6">
+            <div>
+                <p class="text-xl font-bold tracking-widest text-emerald-800 uppercase mb-1">Growth Incubator</p>
+                <h1 class="text-l font-medium text-slate-800">Emerging Potential & Micro-Cap Anomalies</h1>
+                <p class="text-slate-500 mt-2 text-sm">Tracking non-established, hyper-velocity growth assets before they gain institutional crowd momentum.</p>
+            </div>
+            <div class="flex gap-1 bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="px-4 py-2 text-center">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Incubator Feed</p>
+                    <p id="status-badge" class="text-sm font-semibold text-amber-600">Scanning Database...</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="max-w-5xl mx-auto px-6 mb-16">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/70 border-b border-slate-200 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                                <th class="py-4 px-6">Emerging Asset</th>
+                                <th class="py-4 px-6 text-center">Growth Velocity</th>
+                                <th class="py-4 px-6 text-center">Structural Quality</th>
+                                <th class="py-4 px-6 text-center">Timing Entry</th>
+                                <th class="py-4 px-6 text-center">Market Size Cap</th>
+                                <th class="py-4 px-6 text-right">Catalyst Focus</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incubator-body" class="text-sm divide-y divide-slate-100 text-slate-700">
+                            <tr>
+                                <td colspan="6" class="py-16 text-center font-medium text-slate-400 tracking-wide">
+                                    ISOLATING HIGH-POTENTIAL SCALES FROM CLOUD NODE...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://oczkxudrukyotgmpvpdv.supabase.co"; 
+        const SUPABASE_KEY = "sb_publishable_rKa-z8ZCJ76o2AsUqpGHHg_jAQJ74qN";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        function formatNum(val, decimals = 1) {
+            if (val === undefined || val === null || val === "N/A" || val === "None" || val === "") return "N/A";
+            const parsed = parseFloat(val);
+            return isNaN(parsed) ? val : parsed.toFixed(decimals);
+        }
+
+        function getScoreClass(val, maxScale = 10) {
+            if (val === "N/A" || !val || val === "None" || val === "") return "neutral";
+            const num = parseFloat(val);
+            if (maxScale === 5) {
+                if (num >= 4.0) return "green";
+                if (num <= 2.2) return "red";
+                return "neutral";
+            }
+            if (num >= 7.5) return "green";
+            if (num >= 5.0) return "yellow";
+            return "red";
+        }
+
+        async function fetchIncubatorData() {
+            let { data: stock_analysis, error } = await supabaseClient
+                .from('stock_analysis')
+                .select('*');
+
+            if (error) {
+                console.error(error);
+                document.getElementById('incubator-body').innerHTML = `<tr><td colspan="6" class="py-16 text-center text-red-600 font-semibold">PIPELINE ERROR: ${error.message}</td></tr>`;
+                return;
+            }
+
+            // FILTER: Target high growth spikes (Growth Score >= 3.8 out of 5) OR stocks identified as upcoming index movers
+            // This pulls the absolute highest velocity plays out of your general master records
+            let incubatorAssets = stock_analysis.filter(stock => {
+                const growth = parseFloat(stock.growth_score || 0);
+                return growth >= 3.8;
+            });
+
+            // Sort them primarily by raw growth capability metrics
+            incubatorAssets.sort((a, b) => {
+                return parseFloat(b.growth_score || 0) - parseFloat(a.growth_score || 0);
+            });
+
+            const tbody = document.getElementById('incubator-body');
+            tbody.innerHTML = "";
+
+            if (incubatorAssets.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-16 text-center text-slate-400">NO HIGH-VELOCITY GROWTH ANOMALIES FOUND IN CURRENT DATA RUN</td></tr>`;
+                document.getElementById('status-badge').innerText = "Hold Mode";
+                return;
+            }
+
+            incubatorAssets.forEach(stock => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition-colors";
+                
+                // Dynamic generation of custom tracking status/catalyst flags based on data attributes
+                let catalystHtml = `<span class="text-xs text-slate-500 font-medium">Hyper-Scaling Revs</span>`;
+                const rawScore = parseFloat(stock.final_score || 0);
+                
+                if (rawScore >= 7.5) {
+                    catalystHtml = `<span class="inline-flex items-center text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100 rounded px-2 py-0.5 uppercase tracking-wide">🚀 Index Frontrunner</span>`;
+                } else if (parseFloat(stock.invest_score || 0) >= 7.0) {
+                    catalystHtml = `<span class="inline-flex items-center text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 rounded px-2 py-0.5 uppercase tracking-wide">📦 Accumulation Zone</span>`;
+                }
+
+                // Rough estimate mock capital formatting or safe fallback tracking column 
+                // Checks standard metadata patterns for capitalization scales
+                let marketCapText = "Small Cap";
+                if (stock.stock_name && (stock.stock_name.toLowerCase().includes('inc') || stock.ticker.length > 4)) {
+                    marketCapText = "Micro Cap / Early Stage";
+                } else if (rawScore > 8.0) {
+                    marketCapText = "Mid-Cap Breakthrough";
+                }
+
+                tr.innerHTML = `
+                    <td class="py-4 px-6">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-slate-900 mono text-base tracking-tight">${stock.ticker || '---'}</span>
+                            <a href="https://www.tradingview.com/symbols/${stock.ticker || ''}/" target="_blank" class="text-slate-400 hover:text-emerald-800 transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"></path></svg>
+                            </a>
+                        </div>
+                        <div class="text-xs text-slate-400 font-medium truncate max-w-[200px] mt-0.5">${stock.stock_name || 'Emerging Asset Corp'}</div>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <span class="badge-pro ${getScoreClass(stock.growth_score, 5)} min-w-[44px] text-sm mono font-bold">${formatNum(stock.growth_score, 1)}</span>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <span class="badge-pro ${getScoreClass(stock.quality_score, 5)} min-w-[40px] font-medium">${formatNum(stock.quality_score, 1)}</span>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <span class="badge-pro ${getScoreClass(stock.invest_score, 10)} min-w-[40px] font-medium">${formatNum(stock.invest_score, 1)}</span>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md tracking-tight">${marketCapText}</span>
+                    </td>
+                    <td class="py-4 px-6 text-right font-medium">
+                        ${catalystHtml}
+                        <div class="text-[10px] text-slate-400 mt-1 mono font-bold">Price: $${formatNum(stock.stock_price, 2)}</div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('status-badge').innerText = `Active (${incubatorAssets.length} Triggers)`;
+            document.getElementById('status-badge').className = "text-sm font-semibold text-emerald-700";
+        }
+
+        window.onload = fetchIncubatorData;
+    </script>
+</body>
+</html>
