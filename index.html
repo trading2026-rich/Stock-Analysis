@@ -18,6 +18,9 @@
         .badge-pro.yellow { background-color: #FEF7E0; color: #B06000; }
         .badge-pro.red { background-color: #FCE8E6; color: #C5221F; }
         .badge-pro.neutral { background-color: #F1F3F4; color: #5F6368; }
+
+        /* Smooth tab filter transitions */
+        .tab-filter { transition: all 0.2s ease-in-out; }
     </style>
 </head>
 <body class="flex min-h-screen text-slate-800">
@@ -112,15 +115,34 @@
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pipeline Health</p>
                         <div>
                             <p class="text-5xl font-light text-green-700">100%</p>
-                            <p class="text-[10px] text-slate-400 mt-2 font-medium">Sync sync established</p>
+                            <p class="text-[10px] text-slate-400 mt-2 font-medium">Sync established</p>
                         </div>
                     </div>
                 </div> 
             </div>   
 
             <div class="mb-16">
-                <h3 class="text-sm font-bold text-slate-800 mb-2">Data Engine Pipeline</h3>
-                <p class="text-xs text-slate-500 mb-6 font-medium">Components sorted automatically by final raw composite rank.</p>
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-6">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 mb-2">Data Engine Pipeline</h3>
+                        <p class="text-xs text-slate-500 font-medium">Components sorted automatically by final raw composite rank.</p>
+                    </div>
+                    
+                    <div class="flex gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-sm mt-4 md:mt-0 text-xs font-medium">
+                        <button onclick="filterTiers('all')" id="btn-all" class="tab-filter px-3 py-1.5 rounded-lg bg-[#2D4A3E] text-white">
+                            All Assets
+                        </button>
+                        <button onclick="filterTiers('high')" id="btn-high" class="tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100">
+                            High Conviction (≥7.5)
+                        </button>
+                        <button onclick="filterTiers('watchlist')" id="btn-watchlist" class="tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100">
+                            Watchlist (5.0-7.4)
+                        </button>
+                        <button onclick="filterTiers('pullback')" id="btn-pullback" class="tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100">
+                            Pullback Edge
+                        </button>
+                    </div>
+                </div>
                 
                 <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="overflow-x-auto">
@@ -134,7 +156,7 @@
                                     <th class="py-4 px-6 text-center">Growth Score</th>
                                     <th class="py-4 px-6 text-right">Execution Price</th>
                                 </tr>
-                            </thead>
+                            </footer>
                             <tbody id="table-body" class="text-sm divide-y divide-slate-100 text-slate-700">
                                 <tr>
                                     <td colspan="6" class="py-16 text-center font-medium text-slate-400 tracking-wide">
@@ -154,6 +176,8 @@
         const SUPABASE_URL = "https://oczkxudrukyotgmpvpdv.supabase.co"; 
         const SUPABASE_KEY = "sb_publishable_rKa-z8ZCJ76o2AsUqpGHHg_jAQJ74qN";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let globalStockData = []; // Store raw master fetch to filter instantly without pinging DB again
 
         function formatNum(val, decimals = 1) {
             if (val === undefined || val === null || val === "N/A" || val === "None" || val === "") return "N/A";
@@ -193,21 +217,49 @@
                 return;
             }
 
+            // Always organize highest score configurations to the top first
             stock_analysis.sort((a, b) => parseFloat(b.final_score || 0) - parseFloat(a.final_score || 0));
-
+            
+            globalStockData = stock_analysis; // Hold reference in memory
+            
             document.getElementById('total-assets').innerText = stock_analysis.length;
             document.getElementById('top-asset').innerText = stock_analysis[0].ticker || 'N/A';
 
+            renderTableRows(globalStockData);
+            
+            document.getElementById('status-badge').innerText = "Live Sync";
+            document.getElementById('status-badge').className = "text-sm font-semibold text-green-700";
+        }
+
+        function renderTableRows(dataset) {
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = ""; 
             
-            stock_analysis.forEach(stock => {
+            dataset.forEach(stock => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50/80 transition-colors";
+                
+                const curPrice = parseFloat(stock.stock_price || 0);
+                const high52 = parseFloat(stock.high_52w || 0);
+                
+                // Calculate dynamic value edge flag (Price down 15%+ from high but retaining core score viability)
+                let edgeBadgeHtml = '';
+                if (curPrice > 0 && high52 > 0) {
+                    const pctFromHigh = ((high52 - curPrice) / high52) * 100;
+                    if (pctFromHigh >= 15.0 && parseFloat(stock.final_score || 0) >= 5.5) {
+                        edgeBadgeHtml = `<span class="ml-2 text-[9px] font-bold tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-1.5 py-0.5 uppercase">Pullback Edge</span>`;
+                    }
+                }
+
                 tr.innerHTML = `
                     <td class="py-4 px-6">
-                        <div class="font-semibold text-slate-900 mono text-base">${stock.ticker || '---'}</div>
-                        <div class="text-xs text-slate-400 mt-0.5">${stock.stock_name || 'Unknown Asset'}</div>
+                        <div class="flex items-center space-x-2">
+                            <div class="font-bold text-slate-900 mono text-base tracking-tight">${stock.ticker || '---'}</div>
+                            <a href="https://www.tradingview.com/symbols/${stock.ticker || ''}/" target="_blank" class="text-slate-400 hover:text-[#2D4A3E] transition-colors" title="View Technical Chart">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"></path></svg>
+                            </a>
+                        </div>
+                        <div class="text-xs text-slate-400 mt-0.5 font-medium max-w-[180px] truncate">${stock.stock_name || 'Unknown Asset'}</div>
                     </td>
                     <td class="py-4 px-6 text-center">
                         <span class="badge-pro ${getScoreClass(stock.final_score, 10)} w-12 py-1 mono text-sm">${formatNum(stock.final_score, 1)}</span>
@@ -222,15 +274,45 @@
                         <span class="badge-pro ${getScoreClass(stock.growth_score, 5)} min-w-[40px]">${formatNum(stock.growth_score, 1)}</span>
                     </td>
                     <td class="py-4 px-6 text-right">
-                        <div class="font-semibold text-slate-900 mono">$${formatNum(stock.stock_price, 2)}</div>
+                        <div class="flex items-center justify-end">
+                            <div class="font-semibold text-slate-900 mono">$${formatNum(stock.stock_price, 2)}</div>
+                            ${edgeBadgeHtml}
+                        </div>
                         <div class="text-[10px] text-slate-400 mt-0.5">52W High: $${formatNum(stock.high_52w, 2)}</div>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        // === INSTANT CLIENT-SIDE FILTER EXECUTOR ===
+        function filterTiers(mode) {
+            // Reset nav bar tabs styling state first
+            ['all', 'high', 'watchlist', 'pullback'].forEach(m => {
+                const btn = document.getElementById(`btn-${m}`);
+                btn.className = "tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100";
+            });
             
-            document.getElementById('status-badge').innerText = "Live Sync";
-            document.getElementById('status-badge').className = "text-sm font-semibold text-green-700";
+            // Activate current highlight
+            document.getElementById(`btn-${mode}`).className = "tab-filter px-3 py-1.5 rounded-lg bg-[#2D4A3E] text-white font-semibold";
+
+            if (mode === 'all') {
+                renderTableRows(globalStockData);
+            } else if (mode === 'high') {
+                const filtered = globalStockData.filter(s => parseFloat(s.final_score || 0) >= 7.5);
+                renderTableRows(filtered);
+            } else if (mode === 'watchlist') {
+                const filtered = globalStockData.filter(s => parseFloat(s.final_score || 0) >= 5.0 && parseFloat(s.final_score || 0) < 7.5);
+                renderTableRows(filtered);
+            } else if (mode === 'pullback') {
+                const filtered = globalStockData.filter(s => {
+                    const curPrice = parseFloat(s.stock_price || 0);
+                    const high52 = parseFloat(s.high_52w || 0);
+                    const hasPullback = (curPrice > 0 && high52 > 0) ? (((high52 - curPrice) / high52) * 100 >= 15.0) : false;
+                    return hasPullback && parseFloat(s.final_score || 0) >= 5.5;
+                });
+                renderTableRows(filtered);
+            }
         }
 
         window.onload = fetchQuantData;
