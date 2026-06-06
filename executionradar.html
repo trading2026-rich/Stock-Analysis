@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quant Engine - Execution Radar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F4F2EE; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .sidebar-item:hover { background-color: #E9E7E0; }
+        .active-sidebar { background-color: #E9E7E0; font-weight: 600; }
+        
+        .badge-pro { display: inline-flex; align-items: center; justify-content: center; padding: 0.25rem 0.5rem; border-radius: 6px; font-weight: 600; font-size: 0.75rem; }
+        .badge-pro.green { background-color: #E6F4EA; color: #137333; }
+        .badge-pro.yellow { background-color: #FEF7E0; color: #B06000; }
+        .badge-pro.red { background-color: #FCE8E6; color: #C5221F; }
+        .badge-pro.neutral { background-color: #F1F3F4; color: #5F6368; }
+    </style>
+</head>
+<body class="flex min-h-screen text-slate-800">
+
+    <div class="w-64 min-h-screen border-r border-gray-200 p-6 bg-[#F8F7F3] sticky top-0 flex flex-col justify-between">
+        <div>
+            <div class="flex items-center space-x-2 mb-10">
+                <div class="w-8 h-8 bg-[#2D4A3E] text-white flex items-center justify-center rounded-lg text-xs font-bold mono">QE</div>
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mono">v1.0</span>
+            </div>
+            
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Core Pipeline</p>
+            <h2 class="text-xl font-semibold mb-8 text-slate-800">Workspace</h2>
+
+            <nav class="space-y-1 text-sm text-gray-600">
+                <a href="index.html" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
+                    <span>• Quant Matrix</span>
+                </a>
+                <a href="financials.html" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
+                    <span>• Financials</span>
+                </a>
+                <a href="radar.html" class="flex items-center p-3 rounded-lg active-sidebar transition-all text-[#2D4A3E]">
+                    <span>• Execution Radar</span>
+                </a>
+                <a href="#" class="flex items-center p-3 rounded-lg sidebar-item transition-all">
+                    <span>• Settings</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mt-8">
+            <div class="h-24 bg-[#E5E1DA] rounded-xl mb-3 overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1666467831470-8f26f983391f?w=500&auto=format&fit=crop&q=60" class="w-full h-full object-cover opacity-60" alt="zen">
+            </div>
+            <p class="text-xs font-bold text-slate-800">Quant Execution Mode</p>
+            <p class="text-[10px] text-slate-500 mt-1 leading-relaxed">Automated calculations via local background core engine.</p>
+        </div>
+    </div>
+    
+    <main class="flex-1 overflow-y-auto">
+        <header class="max-w-5xl mx-auto flex justify-between items-start mb-12 pt-16 px-6">
+            <div>
+                <p class="text-xl font-bold tracking-widest text-[#2D4A3E] uppercase mb-1">Execution Radar</p>
+                <h1 class="text-l font-medium text-slate-800">High-Conviction Tracking & Tactics</h1>
+                <p class="text-slate-500 mt-2 text-sm">Isolating top mathematical ranking setups for live price-action monitoring.</p>
+            </div>
+            <div class="flex gap-1 bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="px-4 py-2 text-center">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Engine Status</p>
+                    <p id="status-badge" class="text-sm font-semibold text-amber-600">Connecting...</p>
+                </div>
+                <div class="w-[1px] bg-slate-100 my-2"></div>
+                <div class="px-4 py-2 text-center">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Live Watch</p>
+                    <p class="text-sm font-semibold text-green-700">Top 15 Pool</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="max-w-5xl mx-auto px-6 mb-16">
+            <div id="radar-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="col-span-full py-16 text-center font-medium text-slate-400 tracking-wide">
+                    STREAMING TARGET CONFIGURATIONS FROM SUPABASE...
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://oczkxudrukyotgmpvpdv.supabase.co"; 
+        const SUPABASE_KEY = "sb_publishable_rKa-z8ZCJ76o2AsUqpGHHg_jAQJ74qN";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        function formatNum(val, decimals = 1) {
+            if (val === undefined || val === null || val === "N/A" || val === "None" || val === "") return "N/A";
+            const parsed = parseFloat(val);
+            return isNaN(parsed) ? val : parsed.toFixed(decimals);
+        }
+
+        function getScoreClass(val) {
+            const num = parseFloat(val);
+            if (isNaN(num)) return "neutral";
+            if (num >= 7.5) return "green";
+            if (num >= 5.0) return "yellow";
+            return "red";
+        }
+
+        // Handle autosaving technical setup notes local to the browser window storage
+        function saveTradePlan(ticker, notesVal) {
+            localStorage.setItem(`plan_${ticker}`, notesVal);
+        }
+
+        async function fetchRadarData() {
+            let { data: stock_analysis, error } = await supabaseClient
+                .from('stock_analysis')
+                .select('*');
+
+            if (error) {
+                console.error(error);
+                document.getElementById('radar-grid').innerHTML = `<div class="col-span-full py-16 text-center text-red-600 font-semibold">DATABASE ERROR: ${error.message}</div>`;
+                document.getElementById('status-badge').innerText = "Pipeline Broken";
+                return;
+            }
+
+            if (!stock_analysis || stock_analysis.length === 0) {
+                document.getElementById('radar-grid').innerHTML = `<div class="col-span-full py-16 text-center text-slate-400">NO TARGET COMPONENT ROWS EXTRACTED</div>`;
+                document.getElementById('status-badge').innerText = "Empty Grid";
+                return;
+            }
+
+            // Isolate the absolute highest conviction alpha assets (Top 15 rows sorted by final score)
+            stock_analysis.sort((a, b) => parseFloat(b.final_score || 0) - parseFloat(a.final_score || 0));
+            const topFifteen = stock_analysis.slice(0, 15);
+
+            const gridContainer = document.getElementById('radar-grid');
+            gridContainer.innerHTML = "";
+
+            topFifteen.forEach(stock => {
+                const curPrice = parseFloat(stock.stock_price || 0);
+                const high52 = parseFloat(stock.high_52w || 0);
+                
+                // Parse 52-week range strings safely if formatted as "Low - High" or extract standard figures
+                let low52 = curPrice * 0.5; // Baseline safe mathematical fallback
+                if (stock.fifty_two_week_range && stock.fifty_two_week_range !== "N/A") {
+                    const cleanParts = stock.fifty_two_week_range.split('-');
+                    if (cleanParts.length === 2) {
+                        const parsedLow = parseFloat(cleanParts[0].replace(/[^0-9.]/g, ''));
+                        if (!isNaN(parsedLow)) low52 = parsedLow;
+                    }
+                }
+
+                // Calculate visual percentage slider placement positioning
+                let pinPercent = 50; 
+                if (high52 > low52) {
+                    pinPercent = ((curPrice - low52) / (high52 - low52)) * 100;
+                    pinPercent = Math.min(Math.max(pinPercent, 0), 100); // Constraint boundaries between 0% and 100%
+                }
+
+                // Retrieve active saved trade strategies from browser cache
+                const cachedPlan = localStorage.getItem(`plan_${stock.ticker}`) || "";
+
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between hover:border-slate-300 transition-all";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-bold text-slate-900 mono text-lg tracking-tight">${stock.ticker || '---'}</span>
+                                    <a href="https://www.tradingview.com/symbols/${stock.ticker || ''}/" target="_blank" class="text-slate-400 hover:text-[#2D4A3E] transition-colors" title="Open TradingView Chart">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 003 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"></path></svg>
+                                    </a>
+                                </div>
+                                <div class="text-xs text-slate-400 font-medium truncate max-w-[150px] mt-0.5">${stock.stock_name || 'Unknown Asset'}</div>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <span class="badge-pro ${getScoreClass(stock.final_score)} w-12 py-1 mono font-bold text-xs">Score: ${formatNum(stock.final_score, 1)}</span>
+                                <span class="text-xs font-bold text-slate-900 mono mt-1.5">$${formatNum(stock.stock_price, 2)}</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 py-2.5 px-3 bg-slate-50 rounded-xl border border-slate-100 text-center text-xs mb-5">
+                            <div>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">Quality</p>
+                                <p class="font-semibold text-slate-800 mt-0.5 mono">${formatNum(stock.quality_score, 1)}</p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">Timing</p>
+                                <p class="font-semibold text-slate-800 mt-0.5 mono">${formatNum(stock.invest_score, 1)}</p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">Growth</p>
+                                <p class="font-semibold text-slate-800 mt-0.5 mono">${formatNum(stock.growth_score, 1)}</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-5">
+                            <div class="flex justify-between text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                                <span>52W Low ($${formatNum(low52, 0)})</span>
+                                <span>52W High ($${formatNum(high52, 0)})</span>
+                            </div>
+                            <div class="relative w-full h-1 bg-slate-100 rounded-full">
+                                <div class="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-[#2D4A3E] border-2 border-white rounded-full shadow-sm" style="left: calc(${pinPercent}% - 5px);"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+                        <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Technical Trade Plan / Setup Notes</label>
+                        <textarea 
+                            oninput="saveTradePlan('${stock.ticker}', this.value)"
+                            placeholder="Type strategy notes... (e.g., watch daily FVG fill / liquidity sweep)"
+                            class="w-full h-20 bg-slate-50 hover:bg-slate-50/50 focus:bg-white text-xs text-slate-700 p-2.5 rounded-xl border border-slate-200 focus:border-[#2D4A3E] focus:ring-1 focus:ring-[#2D4A3E] outline-none resize-none transition-all placeholder:text-slate-300 leading-relaxed font-medium"
+                        >${cachedPlan}</textarea>
+                    </div>
+                `;
+                gridContainer.appendChild(card);
+            });
+
+            document.getElementById('status-badge').innerText = "Live Sync";
+            document.getElementById('status-badge').className = "text-sm font-semibold text-green-700";
+        }
+
+        window.onload = fetchRadarData;
+    </script>
+</body>
+</html>
