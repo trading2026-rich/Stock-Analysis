@@ -17,9 +17,8 @@
         .badge-pro.yellow { background-color: #FEF7E0; color: #B06000; }
         .badge-pro.red { background-color: #FCE8E6; color: #C5221F; }
         .badge-pro.neutral { background-color: #F1F3F4; color: #5F6368; }
-        
-        /* Subtle glowing edge style for early hyper-growth assets */
-        .incubator-card:hover { border-color: #2D4A3E; transform: translateY(-2px); }
+
+        .tab-filter { transition: all 0.2s ease-in-out; }
     </style>
 </head>
 <body class="flex min-h-screen text-slate-800">
@@ -45,7 +44,7 @@
                     <span>• Execution Radar</span>
                 </a>
                 <a href="potential.html" class="flex items-center p-3 rounded-lg active-sidebar transition-all text-[#2D4A3E]">
-                    <span>• Potential</span>
+                    <span>• Potential Stocks</span>
                 </a>
             </nav>
         </div>
@@ -75,6 +74,26 @@
         </header>
 
         <section class="max-w-5xl mx-auto px-6 mb-16">
+            
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-6">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 mb-2">Filtered Anomalies</h3>
+                    <p class="text-xs text-slate-500 font-medium">Isolating micro and mid scale targets with high velocity score tracks under $50.</p>
+                </div>
+                
+                <div class="flex gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-sm mt-4 md:mt-0 text-xs font-medium">
+                    <button onclick="filterCaps('all')" id="btn-all" class="tab-filter px-3 py-1.5 rounded-lg bg-[#2D4A3E] text-white">
+                        All Potentials
+                    </button>
+                    <button onclick="filterCaps('mid')" id="btn-mid" class="tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100">
+                        Mid-Cap Breakthroughs
+                    </button>
+                    <button onclick="filterCaps('small')" id="btn-small" class="tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100">
+                        Small-Cap Targets
+                    </button>
+                </div>
+            </div>
+
             <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -107,6 +126,8 @@
         const SUPABASE_KEY = "sb_publishable_rKa-z8ZCJ76o2AsUqpGHHg_jAQJ74qN";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        let globalIncubatorData = []; // Hold local cache to filter client-side instantly
+
         function formatNum(val, decimals = 1) {
             if (val === undefined || val === null || val === "N/A" || val === "None" || val === "") return "N/A";
             const parsed = parseFloat(val);
@@ -137,45 +158,49 @@
                 return;
             }
 
-            // === STRICT GROWING POTENTIAL FILTER ===
-            // 1. Must be trading under $50.00 per share
-            // 2. Must have a high-velocity Growth Score >= 3.8 out of 5
-            let incubatorAssets = stock_analysis.filter(stock => {
+            // === STRICT GROWING POTENTIAL BASELINE FILTER ===
+            // 1. Under $50 per share
+            // 2. High growth track velocity score >= 3.8
+            let filtered = stock_analysis.filter(stock => {
                 const price = parseFloat(stock.stock_price || 0);
                 const growth = parseFloat(stock.growth_score || 0);
                 return price > 0 && price < 50.00 && growth >= 3.8;
             });
 
-            // Sort them with the absolute highest growth scores right at the top
-            incubatorAssets.sort((a, b) => {
-                return parseFloat(b.growth_score || 0) - parseFloat(a.growth_score || 0);
-            });
+            // Sort by growth velocity score primary
+            filtered.sort((a, b) => parseFloat(b.growth_score || 0) - parseFloat(a.growth_score || 0));
 
+            globalIncubatorData = filtered; // Cache master data pool
+            renderTableRows(globalIncubatorData);
+
+            document.getElementById('status-badge').innerText = `Active (${globalIncubatorData.length} Pools)`;
+            document.getElementById('status-badge').className = "text-sm font-semibold text-emerald-700";
+        }
+
+        function renderTableRows(dataset) {
             const tbody = document.getElementById('incubator-body');
             tbody.innerHTML = "";
 
-            if (incubatorAssets.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="py-16 text-center text-slate-400">NO EARLY-STAGE ASSETS UNDER $50 WITH EXPLOSIVE GROWTH IN RUN</td></tr>`;
-                document.getElementById('status-badge').innerText = "Hold Mode";
+            if (dataset.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-16 text-center text-slate-400">NO EARLY STAGE ASSETS IDENTIFIED WITHIN THIS CAP RANGE</td></tr>`;
                 return;
             }
 
-            incubatorAssets.forEach(stock => {
+            dataset.forEach(stock => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50/80 transition-colors";
                 
-                let catalystHtml = `<span class="text-xs text-slate-500 font-medium">Hyper-Scaling Revs</span>`;
                 const rawScore = parseFloat(stock.final_score || 0);
                 
+                // Determine classification structure mapping
+                const isMidCap = rawScore >= 7.0; 
+                const marketCapText = isMidCap ? "Mid-Cap Breakthrough" : "Small-Cap Target";
+
+                let catalystHtml = `<span class="text-xs text-slate-500 font-medium">Hyper-Scaling Revs</span>`;
                 if (rawScore >= 7.5) {
                     catalystHtml = `<span class="inline-flex items-center text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100 rounded px-2 py-0.5 uppercase tracking-wide">🚀 Index Frontrunner</span>`;
                 } else if (parseFloat(stock.invest_score || 0) >= 7.0) {
                     catalystHtml = `<span class="inline-flex items-center text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 rounded px-2 py-0.5 uppercase tracking-wide">📦 Accumulation Zone</span>`;
-                }
-
-                let marketCapText = "Small Cap Target";
-                if (rawScore > 7.0) {
-                    marketCapText = "Mid-Cap Breakthrough";
                 }
 
                 tr.innerHTML = `
@@ -198,7 +223,7 @@
                         <span class="badge-pro ${getScoreClass(stock.invest_score, 10)} min-w-[40px] font-medium">${formatNum(stock.invest_score, 1)}</span>
                     </td>
                     <td class="py-4 px-6 text-center">
-                        <span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md tracking-tight">${marketCapText}</span>
+                        <span class="text-xs font-semibold ${isMidCap ? 'text-indigo-700 bg-indigo-50 border border-indigo-100' : 'text-amber-700 bg-amber-50 border border-amber-100'} px-2.5 py-1 rounded-md tracking-tight">${marketCapText}</span>
                     </td>
                     <td class="py-4 px-6 text-right font-medium">
                         ${catalystHtml}
@@ -207,9 +232,30 @@
                 `;
                 tbody.appendChild(tr);
             });
+        }
 
-            document.getElementById('status-badge').innerText = `Active (${incubatorAssets.length} Triggers)`;
-            document.getElementById('status-badge').className = "text-sm font-semibold text-emerald-700";
+        // === INSTANT CAP FILTER EXECUTION ===
+        function filterCaps(mode) {
+            // Clean navigation class configurations
+            ['all', 'mid', 'small'].forEach(m => {
+                const btn = document.getElementById(`btn-${m}`);
+                btn.className = "tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100";
+            });
+
+            // Set chosen highlight active color states
+            document.getElementById(`btn-${mode}`).className = "tab-filter px-3 py-1.5 rounded-lg bg-[#2D4A3E] text-white font-semibold";
+
+            if (mode === 'all') {
+                renderTableRows(globalIncubatorData);
+            } else if (mode === 'mid') {
+                // Mid-Caps mapping to higher score maturities under 50 dollars
+                const filtered = globalIncubatorData.filter(s => parseFloat(s.final_score || 0) >= 7.0);
+                renderTableRows(filtered);
+            } else if (mode === 'small') {
+                // Early phase targets
+                const filtered = globalIncubatorData.filter(s => parseFloat(s.final_score || 0) < 7.0);
+                renderTableRows(filtered);
+            }
         }
 
         window.onload = fetchIncubatorData;
