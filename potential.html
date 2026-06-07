@@ -137,14 +137,16 @@
                 return;
             }
 
-            // FILTER: Target high growth spikes (Growth Score >= 3.8 out of 5) OR stocks identified as upcoming index movers
-            // This pulls the absolute highest velocity plays out of your general master records
+            // === STRICT GROWING POTENTIAL FILTER ===
+            // 1. Must be trading under $50.00 per share
+            // 2. Must have a high-velocity Growth Score >= 3.8 out of 5
             let incubatorAssets = stock_analysis.filter(stock => {
+                const price = parseFloat(stock.stock_price || 0);
                 const growth = parseFloat(stock.growth_score || 0);
-                return growth >= 3.8;
+                return price > 0 && price < 50.00 && growth >= 3.8;
             });
 
-            // Sort them primarily by raw growth capability metrics
+            // Sort them with the absolute highest growth scores right at the top
             incubatorAssets.sort((a, b) => {
                 return parseFloat(b.growth_score || 0) - parseFloat(a.growth_score || 0);
             });
@@ -153,7 +155,7 @@
             tbody.innerHTML = "";
 
             if (incubatorAssets.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="py-16 text-center text-slate-400">NO HIGH-VELOCITY GROWTH ANOMALIES FOUND IN CURRENT DATA RUN</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="py-16 text-center text-slate-400">NO EARLY-STAGE ASSETS UNDER $50 WITH EXPLOSIVE GROWTH IN RUN</td></tr>`;
                 document.getElementById('status-badge').innerText = "Hold Mode";
                 return;
             }
@@ -162,7 +164,6 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50/80 transition-colors";
                 
-                // Dynamic generation of custom tracking status/catalyst flags based on data attributes
                 let catalystHtml = `<span class="text-xs text-slate-500 font-medium">Hyper-Scaling Revs</span>`;
                 const rawScore = parseFloat(stock.final_score || 0);
                 
@@ -172,12 +173,8 @@
                     catalystHtml = `<span class="inline-flex items-center text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 rounded px-2 py-0.5 uppercase tracking-wide">📦 Accumulation Zone</span>`;
                 }
 
-                // Rough estimate mock capital formatting or safe fallback tracking column 
-                // Checks standard metadata patterns for capitalization scales
-                let marketCapText = "Small Cap";
-                if (stock.stock_name && (stock.stock_name.toLowerCase().includes('inc') || stock.ticker.length > 4)) {
-                    marketCapText = "Micro Cap / Early Stage";
-                } else if (rawScore > 8.0) {
+                let marketCapText = "Small Cap Target";
+                if (rawScore > 7.0) {
                     marketCapText = "Mid-Cap Breakthrough";
                 }
 
@@ -205,7 +202,7 @@
                     </td>
                     <td class="py-4 px-6 text-right font-medium">
                         ${catalystHtml}
-                        <div class="text-[10px] text-slate-400 mt-1 mono font-bold">Price: $${formatNum(stock.stock_price, 2)}</div>
+                        <div class="text-[10px] text-slate-700 mt-1 mono font-bold">$${formatNum(stock.stock_price, 2)}</div>
                     </td>
                 `;
                 tbody.appendChild(tr);
